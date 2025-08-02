@@ -3,25 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard - STOP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      text-align: center;
+      padding: 40px;
+    }
+    h2 {
+      color: #333;
+    }
+    button {
+      width: 80%;
+      max-width: 300px;
+      padding: 15px;
+      margin: 10px auto;
+      background-color: #007BFF;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #apelido {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #444;
+    }
+  </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script src="firebase-config.js"></script>
 </head>
 <body>
-  <h1>Bem-vindo ao STOP</h1>
-  <button onclick="location.href='criar_sala.html'">Criar Sala</button><br>
-  <button onclick="location.href='encontrar_sala.html'">Encontrar Sala</button><br>
-  <button onclick="location.href='ranking.html'">Ranking Global</button><br>
-  <button onclick="location.href='estatisticas.html'">Estatísticas</button><br>
-  <button onclick="logout()">Sair</button>
+  <h2>Bem-vindo ao STOP!</h2>
+  <div id="apelido">Carregando...</div>
+  <button onclick="window.location='sala.html?acao=criar'">Criar Sala</button>
+  <button onclick="window.location='sala.html?acao=encontrar'">Encontrar Sala</button>
+  <button onclick="window.location='ranking.html'">Ranking Global</button>
+  <button onclick="window.location='estatisticas.html'">Estatísticas</button>
+
   <script>
     firebase.auth().onAuthStateChanged(user => {
-      if (!user) location.href = "index.html";
+      if (!user) return location.href = "index.html";
+      firebase.database().ref("usuarios/" + user.uid + "/apelido").once("value").then(snap => {
+        document.getElementById("apelido").innerText = "Jogador: " + (snap.val() || user.uid);
+      });
     });
-
-    function logout() {
-      firebase.auth().signOut().then(() => location.href = "index.html");
-    }
   </script>
 </body>
 </html>
