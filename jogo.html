@@ -48,6 +48,11 @@
       margin-bottom: 15px;
       color: #c0392b;
     }
+    #pontosRodada {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -60,6 +65,7 @@
   <div id="info"></div>
   <div id="formulario"></div>
   <button onclick="enviarRespostas()">Enviar Respostas</button>
+  <div id="pontosRodada"></div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -70,13 +76,15 @@
     let letra = "";
     let tempo = 60;
     let intervalo;
+    let userId;
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) return location.href = "index.html";
-      carregarRodada(user);
+      userId = user.uid;
+      carregarRodada();
     });
 
-    function carregarRodada(user) {
+    function carregarRodada() {
       firebase.database().ref("sessoes/" + salaId).once("value").then(snapshot => {
         const sala = snapshot.val();
         categorias = sala.categorias;
@@ -106,18 +114,76 @@
 
     function enviarRespostas() {
       clearInterval(intervalo);
-      const user = firebase.auth().currentUser;
       const respostas = {};
       categorias.forEach(cat => {
         const val = document.getElementById(cat).value.trim();
         respostas[cat] = val;
       });
-      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${user.uid}`).set(respostas).then(() => {
-        if (rodada < 9) {
-          location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
-        } else {
-          location.href = `fim.html?id=${salaId}`;
+
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${userId}`).set(respostas).then(() => {
+        exibirPontuacoesRodada();
+      });
+    }
+
+    function exibirPontuacoesRodada() {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}`).once("value").then(snapshot => {
+        const respostas = snapshot.val();
+        const contagem = {};
+        const pontos = {};
+
+        for (const uid in respostas) {
+          pontos[uid] = 0;
+          for (const cat of categorias) {
+            const r = (respostas[uid][cat] || "").trim().toLowerCase();
+            if (!contagem[cat]) contagem[cat] = {};
+            if (!contagem[cat][r]) contagem[cat][r] = [];
+            contagem[cat][r].push(uid);
+          }
         }
+
+        for (const cat in contagem) {
+          for (const r in contagem[cat]) {
+            const grupo = contagem[cat][r];
+            let p = 0;
+            if (r === "") p = 0;
+            else if (grupo.length === 1) p = 100;
+            else if (grupo.length === 2) p = 50;
+            else if (grupo.length === 3) p = 33;
+            else if (grupo.length === 4) p = 25;
+            else if (grupo.length === 5) p = 20;
+            else if (grupo.length === 6) p = 18;
+            else if (grupo.length === 7) p = 14;
+            else if (grupo.length === 8) p = 13;
+            else if (grupo.length === 9) p = 11;
+            else p = 10;
+
+            grupo.forEach(uid => pontos[uid] += p);
+          }
+        }
+
+        const tabela = Object.entries(pontos).sort((a, b) => b[1] - a[1]);
+        let html = `<h3>Resultado da Rodada:</h3>`;
+        html += "<ul>";
+        let apelidosPromises = tabela.map(([uid, pt]) =>
+          firebase.database().ref("usuarios/" + uid + "/apelido").once("value").then(snap => {
+            const nome = snap.val() || uid;
+            return `<li><b>${nome}</b>: ${pt} pontos</li>`;
+          })
+        );
+
+        Promise.all(apelidosPromises).then(linhas => {
+          html += linhas.join("");
+          html += "</ul><h3 style='text-align:center;'>Sorteando nova letra em 15s...</h3>";
+          document.getElementById("pontosRodada").innerHTML = html;
+
+          setTimeout(() => {
+            if (rodada < 9) {
+              location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
+            } else {
+              location.href = `fim.html?id=${salaId}`;
+            }
+          }, 15000);
+        });
       });
     }
   </script>
