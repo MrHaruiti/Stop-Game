@@ -3,6 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <title>Rodada - STOP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2, h3 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #28a745;
+      color: white;
+      border: none;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    #timer {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #c0392b;
+    }
+  </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -10,9 +56,10 @@
 </head>
 <body>
   <h2>Rodada do STOP</h2>
+  <div id="timer">60</div>
   <div id="info"></div>
   <div id="formulario"></div>
-  <button onclick="enviarRespostas()">Enviar</button>
+  <button onclick="enviarRespostas()">Enviar Respostas</button>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -21,6 +68,8 @@
 
     let categorias = [];
     let letra = "";
+    let tempo = 60;
+    let intervalo;
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) return location.href = "index.html";
@@ -39,10 +88,24 @@
         });
         html += "</form>";
         document.getElementById("formulario").innerHTML = html;
+
+        iniciarTimer();
       });
     }
 
+    function iniciarTimer() {
+      intervalo = setInterval(() => {
+        tempo--;
+        document.getElementById("timer").innerText = tempo;
+        if (tempo <= 0) {
+          clearInterval(intervalo);
+          enviarRespostas();
+        }
+      }, 1000);
+    }
+
     function enviarRespostas() {
+      clearInterval(intervalo);
       const user = firebase.auth().currentUser;
       const respostas = {};
       categorias.forEach(cat => {
