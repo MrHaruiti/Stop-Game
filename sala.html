@@ -50,12 +50,13 @@
 
       if (acao === "criar" && !salaId) {
         salaId = firebase.database().ref("sessoes").push().key;
+
+        const todasCategorias = ['Mamiferos', 'Insetos', 'Aves', 'Repteis', 'Anfibios', 'Paises', 'Frutas', 'Ossos do Corpo Humano', 'Flores e Plantas', 'Utensilios Domesticos', 'Elementos quimicos', 'Cores', 'Idiomas', 'Moedas', 'Profissões', 'Esportes', 'Comidas e Bebidas', 'Marcas e Empresas', 'Instrumentos musicais'];
+const categoriasSorteadas = todasCategorias.sort(() => 0.5 - Math.random()).slice(0, 10);
+
+
         firebase.database().ref("sessoes/" + salaId).set({
-          categorias: [
-            "Mamiferos","Insetos","Aves","Repteis","Anfibios","Paises","Frutas","Ossos do Corpo Humano",
-            "Flores e Plantas","Utensilios Domesticos","Elementos quimicos","Cores","Idiomas","Moedas",
-            "Profissões","Esportes","Comidas e Bebidas","Marcas e Empresas","Instrumentos musicais"
-          ],
+          categorias: categoriasSorteadas,
           letras: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(() => 0.5 - Math.random()).slice(0,10)
         }).then(() => {
           location.href = "sala.html?id=" + salaId + "&acao=criar";
