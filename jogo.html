@@ -54,10 +54,126 @@
       color: #333;
     }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js">
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categoriasSelecionadas.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js">
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categoriasSelecionadas.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js">
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categoriasSelecionadas.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
+  <script src="firebase-config.js">
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categoriasSelecionadas.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
 </head>
 <body>
 <div id="resultadoRodada"></div>
@@ -187,7 +303,36 @@
         });
       });
     }
-  </script>
+  
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categoriasSelecionadas.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
 
   <button onclick="voltarMenu()">Voltar ao Menu</button>
 
@@ -197,10 +342,45 @@
         location.href = "dashboard.html";
       }
     }
-  </script>
+  
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categoriasSelecionadas.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
 <script>
 
+
+let resultadoExibido = false;
+
 function mostrarResultadoRodada(respostas, categorias) {
+  if (resultadoExibido) return;
+  resultadoExibido = true;
+
   const container = document.getElementById("resultadoRodada");
   container.innerHTML = "<h3>Resultado da Rodada</h3>";
 
@@ -234,6 +414,35 @@ function mostrarResultadoRodada(respostas, categorias) {
     }
   }, 1000);
 }
+
+
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categoriasSelecionadas.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
 
 </script>
 </body>
