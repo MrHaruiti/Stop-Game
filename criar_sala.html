@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Criar Sala - STOP</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h2>Criar Sala</h2>
+  <button onclick="criarSala()">Criar</button>
+  <script>
+    const CATEGORIAS = ["Mamíferos", "Insetos", "Aves", "Répteis", "Anfíbios", "Países", "Frutas",
+      "Ossos do Corpo Humano", "Flores e Plantas", "Utensílios Domésticos", "Elementos Químicos",
+      "Cores", "Idiomas", "Moedas", "Profissões", "Esportes", "Comidas e Bebidas", "Instrumentos Musicais",
+      "Marcas e Empresas"];
+
+    function getCategorias() {
+      const selecionadas = [];
+      while (selecionadas.length < 10) {
+        const c = CATEGORIAS[Math.floor(Math.random() * CATEGORIAS.length)];
+        if (!selecionadas.includes(c)) selecionadas.push(c);
+      }
+      return selecionadas;
+    }
+
+    function getLetras() {
+      const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const usadas = [];
+      while (usadas.length < 10) {
+        const l = letras[Math.floor(Math.random() * letras.length)];
+        if (!usadas.includes(l)) usadas.push(l);
+      }
+      return usadas;
+    }
+
+    function criarSala() {
+      const user = firebase.auth().currentUser;
+      if (!user) return alert("Usuário não autenticado.");
+      const salaId = "sala_" + Date.now();
+      const sala = {
+        host: user.uid,
+        categorias: getCategorias(),
+        letras: getLetras(),
+        jogadores: {
+          [user.uid]: {
+            nome: user.email,
+            pontuacao: 0
+          }
+        }
+      };
+      firebase.database().ref("sessoes/" + salaId).set(sala).then(() => {
+        location.href = "sala.html?id=" + salaId;
+      });
+    }
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
