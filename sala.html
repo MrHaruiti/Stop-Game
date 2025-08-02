@@ -2,48 +2,30 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Sala de Espera - STOP</title>
+  <title>Sala - STOP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: 20px auto;
-      background: #f4f4f4;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      padding: 8px;
-      background: #fff;
-      margin-bottom: 6px;
-      border-radius: 6px;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
     button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #007BFF;
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      background-color: #007BFF;
       color: white;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
     }
     button:hover {
-      background: #0056b3;
+      background-color: #0056b3;
     }
-    #linkContainer {
-      margin-top: 15px;
-      word-break: break-word;
+    #jogadores ul {
+      list-style: none;
+      padding: 0;
+    }
+    #jogadores li {
+      font-size: 18px;
+      padding: 4px;
     }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -52,39 +34,52 @@
   <script src="firebase-config.js"></script>
 </head>
 <body>
-  <h2>Sala de Espera</h2>
+  <h2>Sala do Jogo</h2>
+  <div id="linkSala"></div>
   <div id="jogadores"></div>
-
-  <div id="linkContainer">
-    <strong>Link da sala:</strong>
-    <div id="linkSala"></div>
-    <button onclick="copiarLink()">📋 Copiar Link</button>
-  </div>
-
+  <button onclick="copiarLink()">Copiar Link da Sala</button>
   <button id="btnIniciar" onclick="iniciarJogo()" style="display:none;">Iniciar Jogo</button>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const salaId = urlParams.get("id");
+    let salaId = urlParams.get("id");
+    const acao = urlParams.get("acao");
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) return location.href = "index.html";
-      joinSala(user);
+
+      if (acao === "criar" && !salaId) {
+        salaId = firebase.database().ref("sessoes").push().key;
+        firebase.database().ref("sessoes/" + salaId).set({
+          categorias: [
+            "Mamiferos","Insetos","Aves","Repteis","Anfibios","Paises","Frutas","Ossos do Corpo Humano",
+            "Flores e Plantas","Utensilios Domesticos","Elementos quimicos","Cores","Idiomas","Moedas",
+            "Profissões","Esportes","Comidas e Bebidas","Marcas e Empresas","Instrumentos musicais"
+          ],
+          letras: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(() => 0.5 - Math.random()).slice(0,10)
+        }).then(() => {
+          location.href = "sala.html?id=" + salaId + "&acao=criar";
+        });
+      } else if (salaId) {
+        joinSala(user);
+      }
     });
 
     function joinSala(user) {
-      const apelido = user.email.split("@")[0];
-      const jogador = {
-        nome: apelido,
-        pontuacao: 0
-      };
-      firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).set(jogador);
-      firebase.database().ref("sessoes/" + salaId + "/host").once("value").then(snap => {
-        if (!snap.exists()) {
-          firebase.database().ref("sessoes/" + salaId + "/host").set(user.uid);
-        }
+      firebase.database().ref("usuarios/" + user.uid + "/apelido").once("value").then(apelidoSnap => {
+        const jogador = {
+          nome: apelidoSnap.val() || user.email.split("@")[0],
+          pontuacao: 0
+        };
+        firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).set(jogador);
+        firebase.database().ref("sessoes/" + salaId + "/host").once("value").then(snap => {
+          if (!snap.exists()) {
+            firebase.database().ref("sessoes/" + salaId + "/host").set(user.uid);
+          }
+        });
+        monitorarSala();
+        document.getElementById("linkSala").innerText = "Link da sala: " + window.location.href;
       });
-      monitorarSala();
     }
 
     function monitorarSala() {
@@ -117,8 +112,6 @@
         location.href = "jogo.html?id=" + salaId + "&rodada=0";
       });
     }
-
-    document.getElementById("linkSala").innerText = window.location.href;
   </script>
 </body>
 </html>
