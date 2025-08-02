@@ -21,23 +21,76 @@
       mostrarPontuacoes(user.uid);
     });
 
+    function calcularPontuacoes(respostas) {
+      const pontos = {};
+
+      for (const rodada in respostas) {
+        const jogadores = respostas[rodada];
+
+        const todasCategorias = new Set();
+        for (const jogador in jogadores) {
+          const respostasJogador = jogadores[jogador];
+          Object.keys(respostasJogador).forEach(cat => todasCategorias.add(cat));
+        }
+
+        for (const categoria of todasCategorias) {
+          const contagem = {};
+
+          for (const jogador in jogadores) {
+            const resposta = jogadores[jogador][categoria]?.trim().toLowerCase() || "";
+            if (!contagem[resposta]) contagem[resposta] = [];
+            contagem[resposta].push(jogador);
+          }
+
+          for (const resposta in contagem) {
+            const jogadoresIguais = contagem[resposta];
+            let pts = 0;
+            const n = jogadoresIguais.length;
+
+            if (resposta === "") {
+              pts = 0;
+            } else if (n === 1) {
+              pts = 100;
+            } else if (n === 2) {
+              pts = 50;
+            } else if (n === 3) {
+              pts = 33;
+            } else if (n === 4) {
+              pts = 25;
+            } else if (n === 5) {
+              pts = 20;
+            } else if (n === 6) {
+              pts = 18;
+            } else if (n === 7) {
+              pts = 14;
+            } else if (n === 8) {
+              pts = 13;
+            } else if (n === 9) {
+              pts = 11;
+            } else {
+              pts = 10;
+            }
+
+            jogadoresIguais.forEach(j => {
+              if (!pontos[j]) pontos[j] = 0;
+              pontos[j] += pts;
+            });
+          }
+        }
+      }
+
+      return pontos;
+    }
+
     function mostrarPontuacoes(uid) {
       firebase.database().ref(`sessoes/${salaId}/respostas`).once("value").then(snapshot => {
         const respostas = snapshot.val() || {};
-        const jogadores = {};
+        const totais = calcularPontuacoes(respostas);
 
-        for (let r in respostas) {
-          const rodada = respostas[r];
-          for (let jogador in rodada) {
-            if (!jogadores[jogador]) jogadores[jogador] = 0;
-            jogadores[jogador] += 10; // Pontuação simplificada, substituir pela lógica real depois
-          }
-        }
-
-        for (let j in jogadores) {
+        for (let j in totais) {
           firebase.database().ref("usuarios/" + j).once("value").then(snap => {
             const dados = snap.val() || {};
-            const total = (dados.pontuacao_total || 0) + jogadores[j];
+            const total = (dados.pontuacao_total || 0) + totais[j];
             firebase.database().ref("usuarios/" + j).update({
               pontuacao_total: total,
               sessoes_jogadas: (dados.sessoes_jogadas || 0) + 1,
@@ -47,8 +100,8 @@
         }
 
         let html = "<h3>Pontuações Finais</h3><ul>";
-        for (let j in jogadores) {
-          html += `<li>${j}: ${jogadores[j]} pts</li>`;
+        for (let j in totais) {
+          html += `<li>${j}: ${totais[j]} pts</li>`;
         }
         html += "</ul>";
         document.getElementById("pontuacoes").innerHTML = html;
