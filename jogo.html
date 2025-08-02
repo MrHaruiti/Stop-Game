@@ -60,6 +60,7 @@
   <script src="firebase-config.js"></script>
 </head>
 <body>
+<div id="resultadoRodada"></div>
   <h2>Rodada do STOP</h2>
   <div id="timer">60</div>
   <div id="info"></div>
@@ -197,5 +198,43 @@
       }
     }
   </script>
+<script>
+
+function mostrarResultadoRodada(respostas, categorias) {
+  const container = document.getElementById("resultadoRodada");
+  container.innerHTML = "<h3>Resultado da Rodada</h3>";
+
+  let html = "<table border='1' style='margin: 0 auto; background:#fff; border-collapse: collapse;'>";
+  html += "<tr><th>Jogador</th>";
+  categorias.forEach(c => html += "<th>" + c + "</th>");
+  html += "<th>Total</th></tr>";
+
+  for (const jogador in respostas) {
+    html += "<tr><td>" + jogador + "</td>";
+    let total = 0;
+    categorias.forEach(cat => {
+      const r = respostas[jogador][cat] || "";
+      const p = respostas[jogador].pontuacoes?.[cat] || 0;
+      html += "<td>" + r + " (" + p + ")</td>";
+      total += p;
+    });
+    html += "<td><strong>" + total + "</strong></td></tr>";
+  }
+
+  html += "</table><br><div style='font-size:18px;color:#007BFF;'>Sorteando nova letra em <span id='timerRodada'>15</span> segundos...</div>";
+  container.innerHTML += html;
+
+  let t = 15;
+  const intervalo = setInterval(() => {
+    t--;
+    document.getElementById("timerRodada").innerText = t;
+    if (t <= 0) {
+      clearInterval(intervalo);
+      proximaRodada();
+    }
+  }, 1000);
+}
+
+</script>
 </body>
 </html>
