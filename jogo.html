@@ -187,5 +187,15 @@
       });
     }
   </script>
+
+  <button onclick="voltarMenu()">Voltar ao Menu</button>
+
+  <script>
+    function voltarMenu() {
+      if (confirm("Tem certeza que quer sair? Sua rodada atual será perdida.")) {
+        location.href = "dashboard.html";
+      }
+    }
+  </script>
 </body>
 </html>
