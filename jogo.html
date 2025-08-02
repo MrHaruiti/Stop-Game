@@ -63,14 +63,15 @@ function enviarRespostas() {
 
   const respostas = {};
   categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
+    const input = document.getElementById(cat);
     respostas[cat] = input ? input.value.trim() : "";
   });
 
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${user.uid}`).set(respostas).then(() => {
+        exibirPontuacoesRodada();
+      });
     }
   });
 }
@@ -79,41 +80,12 @@ function enviarRespostas() {
 firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
   if (snap.val() === "finalizada" && !rodadaFinalizada) {
     rodadaFinalizada = true;
-    obterRespostasParaRodada();
+    exibirPontuacoesRodada();
   }
 });
 
 </script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js">
-let rodadaFinalizada = false;
-
-function enviarRespostas() {
-  if (rodadaFinalizada) return;
-  rodadaFinalizada = true;
-
-  const respostas = {};
-  categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
-    respostas[cat] = input ? input.value.trim() : "";
-  });
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
-    }
-  });
-}
-
-// Monitorar rodada e disparar fechamento global
-firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
-  if (snap.val() === "finalizada" && !rodadaFinalizada) {
-    rodadaFinalizada = true;
-    obterRespostasParaRodada();
-  }
-});
-
-</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
 <div id="categorias"></div>
@@ -245,27 +217,7 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
       });
     }
   
-let rodadaFinalizada = false;
-
-function enviarRespostas() {
-  if (rodadaFinalizada) return;
-  rodadaFinalizada = true;
-
-  const respostas = {};
-  categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
-    respostas[cat] = input ? input.value.trim() : "";
-  });
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
-    }
-  });
-}
-
-// Monitorar rodada e disparar fechamento global
+ e disparar fechamento global
 firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
   if (snap.val() === "finalizada" && !rodadaFinalizada) {
     rodadaFinalizada = true;
@@ -318,27 +270,7 @@ function mostrarResultadoRodada(respostas, categorias) {
 }
 
 
-let rodadaFinalizada = false;
-
-function enviarRespostas() {
-  if (rodadaFinalizada) return;
-  rodadaFinalizada = true;
-
-  const respostas = {};
-  categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
-    respostas[cat] = input ? input.value.trim() : "";
-  });
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
-    }
-  });
-}
-
-// Monitorar rodada e disparar fechamento global
+ e disparar fechamento global
 firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
   if (snap.val() === "finalizada" && !rodadaFinalizada) {
     rodadaFinalizada = true;
