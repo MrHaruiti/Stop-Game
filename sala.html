@@ -57,7 +57,7 @@ const categoriasSorteadas = todasCategorias.sort(() => 0.5 - Math.random()).slic
 
         firebase.database().ref("sessoes/" + salaId).set({
           categorias: categoriasSorteadas,
-          letras: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(() => 0.5 - Math.random()).slice(0,10)
+          letras: "ABCDEFGHIJKLMNOPQRSTUVXZ".split('').sort(() => 0.5 - Math.random()).slice(0,10)
         }).then(() => {
           location.href = "sala.html?id=" + salaId + "&acao=criar";
         });
