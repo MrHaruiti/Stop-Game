@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - STOP</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h1>Bem-vindo ao STOP</h1>
+  <button onclick="location.href='criar_sala.html'">Criar Sala</button><br>
+  <button onclick="location.href='encontrar_sala.html'">Encontrar Sala</button><br>
+  <button onclick="location.href='ranking.html'">Ranking Global</button><br>
+  <button onclick="location.href='estatisticas.html'">Estatísticas</button><br>
+  <button onclick="logout()">Sair</button>
+  <script>
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) location.href = "index.html";
+    });
+
+    function logout() {
+      firebase.auth().signOut().then(() => location.href = "index.html");
+    }
+  </script>
+</body>
+</html>

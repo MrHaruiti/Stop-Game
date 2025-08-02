@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ranking Global - STOP</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h1>Ranking Global - STOP</h1>
+  <div id="ranking"></div>
+
+  <script>
+    const PATENTES = [
+      [0,"Iniciante"],[101,"Novato"],[251,"Calouro"],[502,"Leitor Casual"],[1004,"Curioso"],
+      [2008,"Observador Raso"],[4016,"Estudante Iniciante"],[8032,"Estudante Regular"],[16064,"Estudante Avançado"],
+      [32128,"Raciocinador"],[64256,"Questionador"],[128512,"Argumentador"],[257024,"Teórico"],
+      [514048,"Prático do Saber"],[1028096,"Executor de Conhecimento"],[2056192,"Analista de Padrões"],
+      [4112384,"Estrategista"],[8224768,"Crítico Racional"],[16449536,"Mestre de Categorias"],
+      [32899072,"Gênio da Associação"],[65798144,"Tático Lógico"],[131596288,"Planejador Intelectual"],
+      [263192576,"Cientista de Palpite"],[526385152,"Enciclopédia Falante"],[1052770304,"Mentor Iniciático"],
+      [2105540608,"Mentor Intermediário"],[4211081216,"Mentor Avançado"],[8422162432,"Lógico Universal"],
+      [16844324864,"Filósofo de Rodadas"],[33688649728,"Mestre Silencioso"],[67377299456,"Oráculo da Sabedoria"],
+      [134754598912,"General do Conhecimento"],[269509197824,"Juiz do Saber"],[539018395648,"Comandante Mental"],
+      [1078036791296,"Supremo Intelectual"],[2156073582592,"Espírito do Jogo"],[4312147165184,"Referência Mundial"],
+      [8624294330368,"Lenda do Conhecimento"],[17285888660736,"Entidade Cognitiva"],[34497177321472,"Deus do Saber"]
+    ];
+
+    function getPatente(pontos) {
+      let patente = PATENTES[0][1];
+      for (let i = 0; i < PATENTES.length; i++) {
+        if (pontos >= PATENTES[i][0]) {
+          patente = PATENTES[i][1];
+        }
+      }
+      return patente;
+    }
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) return location.href = "index.html";
+      carregarRanking();
+    });
+
+    function carregarRanking() {
+      firebase.database().ref("usuarios").once("value").then(snapshot => {
+        const data = snapshot.val();
+        const lista = Object.entries(data || {}).map(([uid, info]) => ({
+          nome: info.nome || "Sem Nome",
+          pontos: info.pontuacao_total || 0,
+          sessoes: info.sessoes_jogadas || 0,
+          melhor: info.melhor_colocacao || "-",
+          ultimo: info.ultimo_jogo || "-"
+        }));
+
+        lista.sort((a, b) => b.pontos - a.pontos);
+        let html = "";
+        lista.slice(0, 50).forEach((j, i) => {
+          html += `<p><strong>#${i+1}</strong> ${j.nome} | ${j.pontos} pts | ${getPatente(j.pontos)}<br>
+          ${j.sessoes} sessões | Melhor colocação: ${j.melhor} | Último jogo: ${formatarData(j.ultimo)}</p><hr>`;
+        });
+        document.getElementById("ranking").innerHTML = html;
+      });
+    }
+
+    function formatarData(dataStr) {
+      if (!dataStr || typeof dataStr !== "string") return "-";
+      const d = new Date(dataStr);
+      return d.toLocaleString("pt-BR");
+    }
+  </script>
+</body>
+</html>
