@@ -62,6 +62,22 @@
         document.getElementById("letra").innerText = letra;
         document.getElementById("numRodada").innerText = rodada + 1;
         renderizarCampos();
+
+let tempoRestante = 60;
+const timerDiv = document.getElementById("timer");
+const intervaloRodada = setInterval(() => {
+  if (rodadaFinalizada) {
+    clearInterval(intervaloRodada);
+    return;
+  }
+  tempoRestante--;
+  timerDiv.innerText = "Tempo restante: " + tempoRestante + "s";
+  if (tempoRestante <= 0) {
+    clearInterval(intervaloRodada);
+    enviarRespostas();
+  }
+}, 1000);
+
       });
 
       firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
