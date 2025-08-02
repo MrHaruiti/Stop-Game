@@ -1,12 +1,12 @@
 // firebase-config.js
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_BUCKET.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SUA_APP_ID",
-  databaseURL: "https://SEU_PROJECT_ID.firebaseio.com"
+  apiKey: "AIzaSyCpQw82Ng1YXX2ojYurHk7cc72p3miTFNk",
+  authDomain: "stop-game-1ecb9.firebaseapp.com",
+  databaseURL: "https://stop-game-1ecb9-default-rtdb.firebaseio.com",
+  projectId: "stop-game-1ecb9",
+  storageBucket: "stop-game-1ecb9.firebasestorage.app",
+  messagingSenderId: "951084529297",
+  appId: "1:951084529297:web:26484b0f33ffedead7b130"
 };
 
 firebase.initializeApp(firebaseConfig);
