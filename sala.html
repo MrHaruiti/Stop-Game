@@ -1,4 +1,59 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Sala de Espera</title></head>
-<body><h2>Sala de Espera (em construção)</h2></body></html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sala de Espera - STOP</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h2>Sala de Espera</h2>
+  <div id="jogadores"></div>
+  <button id="btnIniciar" onclick="iniciarJogo()" style="display:none;">Iniciar Jogo</button>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const salaId = urlParams.get("id");
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) return location.href = "index.html";
+      joinSala(user);
+    });
+
+    function joinSala(user) {
+      const jogador = {
+        nome: user.email,
+        pontuacao: 0
+      };
+      firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).set(jogador);
+      monitorarSala();
+    }
+
+    function monitorarSala() {
+      firebase.database().ref("sessoes/" + salaId + "/jogadores").on("value", snapshot => {
+        const jogadores = snapshot.val() || {};
+        let html = "<h3>Jogadores na sala:</h3><ul>";
+        Object.values(jogadores).forEach(j => html += `<li>${j.nome}</li>`);
+        html += "</ul>";
+        document.getElementById("jogadores").innerHTML = html;
+
+        firebase.auth().onAuthStateChanged(user => {
+          firebase.database().ref("sessoes/" + salaId + "/host").once("value").then(snap => {
+            if (snap.val() === user.uid) {
+              document.getElementById("btnIniciar").style.display = "inline";
+            }
+          });
+        });
+      });
+    }
+
+    function iniciarJogo() {
+      firebase.database().ref("sessoes/" + salaId + "/status").set("iniciado").then(() => {
+        location.href = "jogo.html?id=" + salaId + "&rodada=0";
+      });
+    }
+  </script>
+</body>
+</html>

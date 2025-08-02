@@ -1,4 +1,59 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Fim da Partida</title></head>
-<body><h2>Fim da Partida (em construção)</h2></body></html>
+<head>
+  <meta charset="UTF-8">
+  <title>Fim da Partida - STOP</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h2>Fim da Partida</h2>
+  <div id="pontuacoes"></div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const salaId = urlParams.get("id");
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) return location.href = "index.html";
+      mostrarPontuacoes(user.uid);
+    });
+
+    function mostrarPontuacoes(uid) {
+      firebase.database().ref(`sessoes/${salaId}/respostas`).once("value").then(snapshot => {
+        const respostas = snapshot.val() || {};
+        const jogadores = {};
+
+        for (let r in respostas) {
+          const rodada = respostas[r];
+          for (let jogador in rodada) {
+            if (!jogadores[jogador]) jogadores[jogador] = 0;
+            jogadores[jogador] += 10; // Pontuação simplificada, substituir pela lógica real depois
+          }
+        }
+
+        for (let j in jogadores) {
+          firebase.database().ref("usuarios/" + j).once("value").then(snap => {
+            const dados = snap.val() || {};
+            const total = (dados.pontuacao_total || 0) + jogadores[j];
+            firebase.database().ref("usuarios/" + j).update({
+              pontuacao_total: total,
+              sessoes_jogadas: (dados.sessoes_jogadas || 0) + 1,
+              ultimo_jogo: new Date().toISOString()
+            });
+          });
+        }
+
+        let html = "<h3>Pontuações Finais</h3><ul>";
+        for (let j in jogadores) {
+          html += `<li>${j}: ${jogadores[j]} pts</li>`;
+        }
+        html += "</ul>";
+        document.getElementById("pontuacoes").innerHTML = html;
+      });
+    }
+  </script>
+</body>
+</html>

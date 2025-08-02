@@ -1,4 +1,62 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Jogo em Andamento</title></head>
-<body><h2>Jogo em Andamento (em construção)</h2></body></html>
+<head>
+  <meta charset="UTF-8">
+  <title>Rodada - STOP</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h2>Rodada do STOP</h2>
+  <div id="info"></div>
+  <div id="formulario"></div>
+  <button onclick="enviarRespostas()">Enviar</button>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const salaId = urlParams.get("id");
+    const rodada = parseInt(urlParams.get("rodada"));
+
+    let categorias = [];
+    let letra = "";
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) return location.href = "index.html";
+      carregarRodada(user);
+    });
+
+    function carregarRodada(user) {
+      firebase.database().ref("sessoes/" + salaId).once("value").then(snapshot => {
+        const sala = snapshot.val();
+        categorias = sala.categorias;
+        letra = sala.letras[rodada];
+        document.getElementById("info").innerHTML = `<h3>Rodada ${rodada+1}/10 — Letra: ${letra}</h3>`;
+        let html = "<form id='respostas'>";
+        categorias.forEach(cat => {
+          html += `<label>${cat}:</label><input type="text" id="${cat}" placeholder="..."><br>`;
+        });
+        html += "</form>";
+        document.getElementById("formulario").innerHTML = html;
+      });
+    }
+
+    function enviarRespostas() {
+      const user = firebase.auth().currentUser;
+      const respostas = {};
+      categorias.forEach(cat => {
+        const val = document.getElementById(cat).value.trim();
+        respostas[cat] = val;
+      });
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${user.uid}`).set(respostas).then(() => {
+        if (rodada < 9) {
+          location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
+        } else {
+          location.href = `fim.html?id=${salaId}`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
