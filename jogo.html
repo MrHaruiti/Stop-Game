@@ -1,184 +1,381 @@
-
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Stop Game - Rodada</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <meta charset="UTF-8">
+  <title>Rodada - STOP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial; text-align: center; background: #f4f4f4; padding: 20px; }
-    input { margin: 5px; padding: 5px; }
-    #pontuacoes, #timer { margin-top: 20px; font-size: 20px; }
-    #respostasTabela { margin: 20px auto; border-collapse: collapse; width: 80%; }
-    #respostasTabela td, #respostasTabela th { border: 1px solid #ccc; padding: 8px; }
-    #stopBtn { margin-top: 20px; font-size: 20px; padding: 10px 30px; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2, h3 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #28a745;
+      color: white;
+      border: none;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    #timer {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #c0392b;
+    }
+    #pontosRodada {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js">
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categorias.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+
+function iniciarTimerRodada() {
+  let tempoRestante = 60;
+  const timerDiv = document.getElementById("timer");
+  timerDiv.innerText = "Tempo restante: " + tempoRestante + "s";
+  const intervalo = setInterval(() => {
+    if (rodadaFinalizada) {
+      clearInterval(intervalo);
+      return;
+    }
+    tempoRestante--;
+    timerDiv.innerText = "Tempo restante: " + tempoRestante + "s";
+    if (tempoRestante <= 0) {
+      clearInterval(intervalo);
+      enviarRespostas();
+    }
+  }, 1000);
+}
+
+</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js">
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categorias.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
 </head>
 <body>
-  <h2>Rodada <span id="numRodada">1</span>/10</h2>
-  <div id="letraAtual">Letra: <strong id="letra">A</strong></div>
-  <div id="categorias"></div>
-  <button id="stopBtn" onclick="enviarRespostas()">STOP!</button>
-  <div id="timer"></div>
-  <div id="pontuacoes"></div>
-  <div style="margin-top:30px;">
-    <button onclick="window.location.href='index.html'">Voltar ao Menu</button>
-  </div>
+<div id="categorias"></div>
+<div id="resultadoRodada"></div>
+  <h2>Rodada do STOP</h2>
+  <div id="timer">60</div>
+  <div id="info"></div>
+  <div id="formulario"></div>
+  <button onclick="enviarRespostas()">STOP!</button>
+  <div id="pontosRodada"></div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCpQw82Ng1YXX2ojYurHk7cc72p3miTFNk",
-      authDomain: "stop-game-1ecb9.firebaseapp.com",
-      databaseURL: "https://stop-game-1ecb9-default-rtdb.firebaseio.com",
-      projectId: "stop-game-1ecb9",
-      storageBucket: "stop-game-1ecb9.appspot.com",
-      messagingSenderId: "951084529297",
-      appId: "1:951084529297:web:26484b0f33ffedead7b130"
-    };
-    firebase.initializeApp(firebaseConfig);
-
     const urlParams = new URLSearchParams(window.location.search);
     const salaId = urlParams.get("id");
-    let rodada = parseInt(urlParams.get("rodada") || "0");
-    let letra = '';
+    const rodada = parseInt(urlParams.get("rodada"));
+
     let categorias = [];
-    let usuario = null;
-    let rodadaFinalizada = false;
+    let letra = "";
+    let tempo = 60;
+    let intervalo;
+    let userId;
 
     firebase.auth().onAuthStateChanged(user => {
-      if (user) {
-        usuario = user;
-        carregarDadosSala();
-      }
+      if (!user) return location.href = "index.html";
+      userId = user.uid;
+      carregarRodada();
     });
 
-    function carregarDadosSala() {
-      firebase.database().ref(`sessoes/${salaId}`).once("value").then(snap => {
-        const dados = snap.val();
-        letra = dados.letras[rodada];
-        categorias = dados.categorias;
-        document.getElementById("letra").innerText = letra;
-        document.getElementById("numRodada").innerText = rodada + 1;
-        renderizarCampos();
+    function carregarRodada() {
+      firebase.database().ref("sessoes/" + salaId).once("value").then(snapshot => {
+        const sala = snapshot.val();
+        categorias = sala.categorias;
+        letra = sala.letras[rodada];
+        document.getElementById("info").innerHTML = `<h3>Rodada ${rodada+1}/10 — Letra: ${letra}</h3>`;
+        let html = "<form id='respostas'>";
+        categorias.forEach(cat => {
+          html += `<label>${cat}:</label><input type="text" id="${cat}" placeholder="..."><br>`;
+        });
+        html += "</form>";
+        document.getElementById("formulario").innerHTML = html;
 
-let tempoRestante = 60;
-const timerDiv = document.getElementById("timer");
-const intervaloRodada = setInterval(() => {
-  if (rodadaFinalizada) {
-    clearInterval(intervaloRodada);
-    return;
-  }
-  tempoRestante--;
-  timerDiv.innerText = "Tempo restante: " + tempoRestante + "s";
-  if (tempoRestante <= 0) {
-    clearInterval(intervaloRodada);
-    enviarRespostas();
-  }
-}, 1000);
-
-      });
-
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
-        if (snap.val() === "finalizada" && !rodadaFinalizada) {
-          rodadaFinalizada = true;
-          exibirPontuacoesRodada();
-        }
+        iniciarTimer();
       });
     }
 
-    function renderizarCampos() {
-      const div = document.getElementById("categorias");
-      div.innerHTML = "";
-      categorias.forEach(cat => {
-        const label = document.createElement("label");
-        label.innerText = cat + ": ";
-        const input = document.createElement("input");
-        input.id = cat;
-        div.appendChild(label);
-        div.appendChild(input);
-        div.appendChild(document.createElement("br"));
-      });
+    function iniciarTimer() {
+      intervalo = setInterval(() => {
+        tempo--;
+        document.getElementById("timer").innerText = tempo;
+        if (tempo <= 0) {
+          clearInterval(intervalo);
+          enviarRespostas();
+        }
+      }, 1000);
     }
 
     function enviarRespostas() {
-      if (rodadaFinalizada) return;
-      rodadaFinalizada = true;
-
+      clearInterval(intervalo);
       const respostas = {};
       categorias.forEach(cat => {
         const val = document.getElementById(cat).value.trim();
         respostas[cat] = val;
       });
 
-      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${usuario.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
-    }
-
-    function exibirPontuacoesRodada() {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}`).once("value").then(snap => {
-        const respostas = snap.val() || {};
-        const tabela = document.createElement("table");
-        tabela.id = "respostasTabela";
-        const header = document.createElement("tr");
-        header.innerHTML = "<th>Jogador</th>" + categorias.map(c => `<th>${c}</th>`).join("");
-        tabela.appendChild(header);
-
-        const contagem = {};
-        for (let uid in respostas) {
-          categorias.forEach(cat => {
-            const r = (respostas[uid][cat] || "").toLowerCase();
-            if (!contagem[cat]) contagem[cat] = {};
-            contagem[cat][r] = (contagem[cat][r] || 0) + 1;
-          });
-        }
-
-        for (let uid in respostas) {
-          const linha = document.createElement("tr");
-          const jogadorNome = uid.substring(0,6);
-          linha.innerHTML = `<td>${jogadorNome}</td>`;
-          categorias.forEach(cat => {
-            const resp = (respostas[uid][cat] || "").toLowerCase();
-            const rep = contagem[cat][resp];
-            let pts = 0;
-            if (resp === "") pts = 0;
-            else if (rep === 1) pts = 100;
-            else if (rep === 2) pts = 50;
-            else if (rep === 3) pts = 33;
-            else if (rep === 4) pts = 25;
-            else if (rep === 5) pts = 20;
-            else if (rep === 6) pts = 18;
-            else if (rep === 7) pts = 14;
-            else if (rep === 8) pts = 13;
-            else if (rep === 9) pts = 11;
-            else pts = 10;
-            linha.innerHTML += `<td>${resp} (${pts})</td>`;
-          });
-          tabela.appendChild(linha);
-        }
-
-        const div = document.getElementById("pontuacoes");
-        div.innerHTML = "<h3>Resultado da Rodada</h3>";
-        div.appendChild(tabela);
-
-        iniciarContadorProximaRodada();
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${userId}`).set(respostas).then(() => {
+        exibirPontuacoesRodada();
       });
     }
 
-    function iniciarContadorProximaRodada() {
-      let segundos = 15;
-      const timer = document.getElementById("timer");
-      timer.innerText = "Sorteando nova letra em " + segundos + "s";
-      const intervalo = setInterval(() => {
-        segundos--;
-        timer.innerText = "Sorteando nova letra em " + segundos + "s";
-        if (segundos <= 0) {
-          clearInterval(intervalo);
-          window.location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
+    function exibirPontuacoesRodada() {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}`).once("value").then(snapshot => {
+        const respostas = snapshot.val();
+        const contagem = {};
+        const pontos = {};
+
+        for (const uid in respostas) {
+          pontos[uid] = 0;
+          for (const cat of categorias) {
+            const r = (respostas[uid][cat] || "").trim().toLowerCase();
+            if (!contagem[cat]) contagem[cat] = {};
+            if (!contagem[cat][r]) contagem[cat][r] = [];
+            contagem[cat][r].push(uid);
+          }
         }
-      }, 1000);
+
+        for (const cat in contagem) {
+          for (const r in contagem[cat]) {
+            const grupo = contagem[cat][r];
+            let p = 0;
+            if (r === "") p = 0;
+            else if (grupo.length === 1) p = 100;
+            else if (grupo.length === 2) p = 50;
+            else if (grupo.length === 3) p = 33;
+            else if (grupo.length === 4) p = 25;
+            else if (grupo.length === 5) p = 20;
+            else if (grupo.length === 6) p = 18;
+            else if (grupo.length === 7) p = 14;
+            else if (grupo.length === 8) p = 13;
+            else if (grupo.length === 9) p = 11;
+            else p = 10;
+
+            grupo.forEach(uid => pontos[uid] += p);
+          }
+        }
+
+        const tabela = Object.entries(pontos).sort((a, b) => b[1] - a[1]);
+        let html = `<h3>Resultado da Rodada:</h3>`;
+        html += "<ul>";
+        let apelidosPromises = tabela.map(([uid, pt]) =>
+          firebase.database().ref("usuarios/" + uid + "/apelido").once("value").then(snap => {
+            const nome = snap.val() || uid;
+            return `<li><b>${nome}</b>: ${pt} pontos</li>`;
+          })
+        );
+
+        Promise.all(apelidosPromises).then(linhas => {
+          html += linhas.join("");
+          html += "</ul><h3 style='text-align:center;'>Sorteando nova letra em 15s...</h3>";
+          document.getElementById("pontosRodada").innerHTML = html;
+
+          setTimeout(() => {
+            if (rodada < 9) {
+              location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
+            } else {
+              location.href = `fim.html?id=${salaId}`;
+            }
+          }, 15000);
+        });
+      });
     }
-  </script>
+  
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categorias.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
+<script>
+
+
+let resultadoExibido = false;
+
+function mostrarResultadoRodada(respostas, categorias) {
+  if (resultadoExibido) return;
+  resultadoExibido = true;
+
+  const container = document.getElementById("resultadoRodada");
+  container.innerHTML = "<h3>Resultado da Rodada</h3>";
+
+  let html = "<table border='1' style='margin: 0 auto; background:#fff; border-collapse: collapse;'>";
+  html += "<tr><th>Jogador</th>";
+  categorias.forEach(c => html += "<th>" + c + "</th>");
+  html += "<th>Total</th></tr>";
+
+  for (const jogador in respostas) {
+    html += "<tr><td>" + jogador + "</td>";
+    let total = 0;
+    categorias.forEach(cat => {
+      const r = respostas[jogador][cat] || "";
+      const p = respostas[jogador].pontuacoes?.[cat] || 0;
+      html += "<td>" + r + " (" + p + ")</td>";
+      total += p;
+    });
+    html += "<td><strong>" + total + "</strong></td></tr>";
+  }
+
+  html += "</table><br><div style='font-size:18px;color:#007BFF;'>Sorteando nova letra em <span id='timerRodada'>15</span> segundos...</div>";
+  container.innerHTML += html;
+
+  let t = 15;
+  const intervalo = setInterval(() => {
+    t--;
+    document.getElementById("timerRodada").innerText = t;
+    if (t <= 0) {
+      clearInterval(intervalo);
+      proximaRodada();
+    }
+  }, 1000);
+}
+
+
+let rodadaFinalizada = false;
+
+function enviarRespostas() {
+  if (rodadaFinalizada) return;
+  rodadaFinalizada = true;
+
+  const respostas = {};
+  categorias.forEach(cat => {
+    const input = document.getElementById("cat_" + cat);
+    respostas[cat] = input ? input.value.trim() : "";
+  });
+
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
+      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+    }
+  });
+}
+
+// Monitorar rodada e disparar fechamento global
+firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
+  if (snap.val() === "finalizada" && !rodadaFinalizada) {
+    rodadaFinalizada = true;
+    obterRespostasParaRodada();
+  }
+});
+
+</script>
+
+<div style="margin-top: 30px; text-align: center;">
+  <button onclick="voltarMenu()">Voltar ao Menu</button>
+</div>
+
+<script>
+function voltarMenu() {
+  window.location.href = "index.html";
+}
+</script>
+
 </body>
 </html>
