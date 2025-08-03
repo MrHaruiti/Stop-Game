@@ -1,0 +1,53 @@
+{
+  "Mamíferos": [
+    "Anta", "Antílope", "Asno", "Alce", "Alpaca", "Bisão", "Baleia", "Cão", "Cavalo", "Camelo", "Canguru", "Capivara", "Cervo", "Cabra", "Dromedário", "Elefante", "Esquilo", "Foca", "Gato", "Hiena", "Iaque", "Javali", "Jumento", "Leão", "Leopardo", "Lhama", "Lobo", "Macaco", "Mamute", "Morsa", "Narval", "Onça", "Ovelha", "Panda", "Pantera", "Pato", "Quati", "Raposa", "Sagui", "Tatu", "Tigre", "Urso", "Vaca", "Veado", "Zebra"
+  ],
+  "Insetos": [
+    "Abelha", "Barata", "Barbeiro", "Borboleta", "Carrapato", "Dengue", "Escaravelho", "Formiga", "Gafanhoto", "Grilo", "Joaninha", "Lagarta", "Mariposa", "Mosca", "Mosquito", "Percevejo", "Pulga", "Queratina", "Serpente", "Taturana", "Vespa", "Zumbido"
+  ],
+  "Aves": [
+    "Andorinha", "Bem-te-vi", "Cotovia", "Dodo", "Ema", "Falcão", "Galinha", "Harpia", "Ibis", "João-de-barro", "Loro", "Mandarim", "Narceja", "Oriáde", "Papagaio", "Quero-quero", "Rolinha", "Sabiá", "Tico-tico", "Uirapuru", "Viúva", "Zebra"
+  ],
+  "Répteis": [
+    "Anaconda", "Cágado", "Crocodilo", "Dragão", "Escorpião", "Furão", "Gafanhoto", "Hiena", "Iguana", "Jabuti", "Lagartixa", "Mamba", "Naja", "Onça", "Pitón", "Quelônio", "Rã", "Serpente", "Tartaruga", "Urutu", "Víbora", "Zigue-zague"
+  ],
+  "Anfíbios": [
+    "Axolote", "Sapo", "Rã", "Salamandra", "Tritão", "Perereca", "Cururu", "Bugio", "Cagado", "Javari"
+  ],
+  "Países": [
+    "Brasil", "Argentina", "Chile", "Uruguai", "Paraguai", "Peru", "Colômbia", "Venezuela", "Equador", "Bolívia", "Guiana", "Suriname", "Guiana Francesa", "México", "Estados Unidos", "Canadá", "Cuba", "República Dominicana", "Haiti", "Jamaica", "Costa Rica", "Panamá", "Nicarágua", "Honduras", "El Salvador", "Guatemala", "Belize", "Trinidad e Tobago", "Barbados", "Bahamas", "Portugal", "Espanha", "França", "Itália", "Alemanha", "Inglaterra", "Irlanda", "Holanda", "Bélgica", "Suíça", "Áustria", "Dinamarca", "Noruega", "Suécia", "Finlândia", "Rússia", "Polônia", "República Tcheca", "Eslováquia", "Hungria", "Romênia", "Bulgária", "Grécia", "Turquia", "Israel", "Egito", "Líbia", "Tunísia", "Argélia", "Marrocos", "Angola", "Moçambique", "África do Sul", "Nigéria", "Gana", "Quênia", "Etiópia", "Sudão", "Zimbábue", "Zâmbia", "Madagascar", "Austrália", "Nova Zelândia", "Indonésia", "Tailândia", "Malásia", "Filipinas", "Singapura", "Vietnã", "Camboja", "Laos", "Mianmar", "Bangladesh", "Paquistão", "Índia", "Nepal", "Butão", "China", "Japão", "Coreia do Sul", "Coreia do Norte", "Mongólia", "Irã", "Iraque", "Arábia Saudita", "Iêmen", "Síria", "Líbano", "Jordânia", "Kuwait", "Bahrein", "Catar", "Emirados Árabes", "Omã", "Afeganistão", "Cazaquistão", "Uzbequistão", "Quirguistão", "Tajiquistão", "Turcomenistão"
+  ],
+  "Frutas": [
+    "Abacaxi", "Banana", "Laranja", "Maçã", "Uva", "Morango", "Manga", "Abacate", "Melancia", "Melão", "Mamão", "Pêssego", "Pêra", "Kiwi", "Limão", "Caju", "Caqui", "Cereja", "Figo", "Goiaba", "Jabuticaba", "Jaca", "Lima", "Maracujá", "Nectarina", "Pitanga", "Romã", "Tangerina", "Acerola", "Amora", "Coco", "Damasco", "Framboesa", "Graviola", "Groselha", "Tâmara"
+  ],
+  "Ossos do Corpo Humano": [
+    "Cabeça", "Cérebro", "Coração", "Pulmão", "Fígado", "Rim", "Estômago", "Intestino", "Fêmur", "Cotovelo", "Joelho", "Tornozelo", "Pé", "Mão", "Dedo", "Nariz", "Boca", "Olho", "Orelha", "Braço", "Perna", "Coxa", "Barriga", "Costas", "Peito", "Ombro", "Pescoço", "Cotovelo", "Panturrilha", "Triceps", "Biceps", "Quadríceps", "Isquiotibiais", "Glúteos", "Abdômen", "Costela", "Clavícula", "Escápula", "Úmero", "Rádio", "Cúbito", "Pelvis", "Fêmur", "Patela", "Fíbula", "Tíbia", "Tarso", "Metatarso", "Falanges"
+  ],
+  "Flores e Plantas": [
+    "Rosa", "Cravo", "Tulipa", "Margarida", "Girassol", "Lírio", "Orquídea", "Violeta", "Jasmim", "Hortênsia", "Camélia", "Begônia", "Dália", "Peônia", "Cravina", "Amarílis", "Gérbera", "Zínia", "Antúrio", "Bromélia", "Samambaia", "Bambu", "Cacto", "Suculenta", "Hibisco", "Magnólia", "Lavanda", "Camomila", "Menta", "Alecrim", "Manjericão", "Sálvia", "Tomilho", "Orégano", "Capim", "Pinheiro", "Cipreste", "Eucalipto", "Ipê", "Jequitibá", "Pau-brasil", "Cedro", "Araucária", "Palmeira", "Bambu", "Bromélia", "Orquídea", "Violeta", "Camélia"
+  ],
+  "Utensílios Domésticos": [
+    "Panela", "Frigideira", "Colher", "Garfo", "Faca", "Prato", "Copo", "Xícara", "Chaleira", "Bule", "Forno", "Microondas", "Geladeira", "Freezer", "Máquina de Lavar", "Secadora", "Aspirador", "Vassoura", "Pá", "Esfregão", "Balde", "Pano", "Sabo", "Detergente", "Escova", "Pasta", "Chuveiro", "Torneira", "Vaso", "Privada", "Pia", "Espelho", "Cama", "Travesseiro", "Lençol", "Toalha", "Sabonete", "Shampoo", "Condicionador", "Desodorante", "Perfume", "Maquiagem", "Cotonete", "Algodão", "Lâmina", "Barbeador", "Secador", "Chapinha", "Mamadeira", "Chupeta", "Fralda", "Carrinho", "Berço", "Banheira", "Tapete", "Sofá", "Cadeira", "Mesa", "Guarda-roupa", "Cômoda", "Estante", "Prateleira", "Armário", "Porta", "Janela", "Cortina", "Persiana", "Luminária", "Abajur", "Interruptor", "Tomada"
+  ],
+  "Elementos Químicos": [
+    "Hidrogênio", "Hélio", "Lítio", "Berílio", "Boro", "Carbono", "Nitrogênio", "Oxigênio", "Flúor", "Neônio", "Sódio", "Magnésio", "Alumínio", "Silício", "Fósforo", "Enxofre", "Cloro", "Argônio", "Potássio", "Cálcio", "Escândio", "Titânio", "Vanádio", "Cromo", "Manganês", "Ferro", "Cobalto", "Níquel", "Cobre", "Zinco", "Gálio", "Germânio", "Arsênio", "Selênio", "Bromo", "Criptônio", "Rubídio", "Estrôncio", "Ítrio", "Zircônio", "Nióbio", "Molibdênio", "Tecnécio", "Rutênio", "Ródio", "Paládio", "Prata", "Cádmio", "Índio", "Estanho", "Antimônio", "Telúrio", "Iodo", "Xenônio", "Césio", "Bário", "Lantânio", "Cério", "Praseodímio", "Neodímio"
+  ],
+  "Cores": [
+    "Vermelho", "Azul", "Verde", "Amarelo", "Laranja", "Roxo", "Rosa", "Preto", "Branco", "Cinza", "Marrom", "Bege", "Bordô", "Ciano", "Magenta", "Turquesa", "Salmão", "Lilás", "Índigo", "Dourado", "Prata", "Bronze", "Cobre", "Ouro", "Púrpura", "Violeta", "Ametista", "Safira", "Esmeralda", "Rubi", "Topázio", "Opala", "Âmbar", "Jade", "Pérola", "Coral", "Creme", "Marfim"
+  ],
+  "Idiomas": [
+    "Português", "Inglês", "Espanhol", "Francês", "Alemão", "Italiano", "Japonês", "Chinês", "Coreano", "Russo", "Árabe", "Hebraico", "Grego", "Latim", "Sânscrito", "Hindi", "Bengali", "Punjabi", "Javanês", "Telugu", "Marathi", "Tâmil", "Urdu", "Gujarati", "Kannada", "Malayalam", "Oriya", "Bhojpuri", "Tagalo", "Indonésio", "Holandês", "Sueco", "Norueguês", "Dinamarquês", "Finlandês", "Polonês", "Tcheco", "Eslovaco", "Húngaro", "Romeno", "Búlgaro", "Croata", "Sérvio", "Esloveno", "Albanês", "Macedônio", "Bielorrusso", "Ucraniano"
+  ],
+  "Moedas": [
+    "Real", "Dólar", "Euro", "Libra", "Iene", "Franco", "Peso", "Rublo", "Yuan", "Won", "Rupia", "Dinar", "Dirham", "Coroa", "Rand", "Baht", "Ringgit", "Cedi", "Shilling", "Naira", "Kwanza", "Metical", "Guarani", "Gourde", "Bolívar", "Córdoba", "Balboa", "Colon", "Lempira", "Quetzal", "Lira", "Dracma", "Forint", "Zloty", "Leu", "Koruna", "Krone", "Krona", "Rufiyaa", "Ngultrum", "Taka", "Ngwee", "Birr", "Dalasi", "Cedi", "Shilling", "Leone"
+  ],
+  "Profissões": [
+    "Advogado", "Médico", "Engenheiro", "Professor", "Enfermeiro", "Policial", "Bombeiro", "Juiz", "Promotor", "Defensor", "Procurador", "Delegado", "Inspetor", "Comissário", "Agente", "Fiscal", "Auditor", "Contador", "Economista", "Administrador", "Diretor", "Gerente", "Coordenador", "Supervisor", "Chefe", "Presidente", "Vice-presidente", "Secretário", "Assistente", "Estagiário", "Analista", "Consultor", "Especialista", "Técnico", "Operador", "Operário", "Trabalhador", "Empregado", "Funcionário", "Servidor", "Público", "Privado", "Autônomo", "Empresário", "Comerciante", "Vendedor", "Atendente", "Recepcionista", "Caixa", "Tesoureiro", "Contínuo", "Office-boy", "Faxineiro", "Zelador", "Porteiro", "Segurança", "Vigia", "Guarda", "Concierge", "Mordomo", "Cozinheiro", "Chef", "Garçom", "Copeiro", "Barman", "Barista"
+  ],
+  "Esportes": [
+    "Futebol", "Basquete", "Vôlei", "Tênis", "Natação", "Atletismo", "Ginástica", "Judô", "Karatê", "Taekwondo", "Boxe", "Luta", "Livre", "Greco-romana", "Capoeira", "Surfe", "Skate", "Skii", "Snowboard", "Mountain", "Bike", "Ciclismo", "Corrida", "Maratona", "Triatlo", "Duatlo", "Handebol", "Futsal", "Futebol", "Americano", "Rugby", "Críquete", "Beisebol", "Softbol", "Hóquei", "Golfe", "Tênis", "Mesa", "Badminton", "Squash", "Polo", "Aquático", "Remo", "Vela", "Canoagem", "Caiaque", "Stand", "Up", "Paddle", "Bodyboard", "Kitesurf", "Windsurf", "Motonáutica", "Automobilismo", "Motociclismo", "Rali", "Rally", "Stock", "Car", "Fórmula", "1", "Fórmula", "Indy", "NASCAR", "Drag", "Racing", "Rally", "Cross", "Rally", "Raid", "Dakar", "Enduro", "Trial", "Superbike", "Moto", "GP", "Speedway", "Trial", "Motocross", "Freestyle", "BMX"
+  ],
+  "Comidas e Bebidas": [
+    "Arroz", "Feijão", "Macarrão", "Lasanha", "Pizza", "Hambúrguer", "Cachorro", "Quente", "Sanduíche", "Torrada", "Pão", "Bolo", "Bolo de Chocolate", "Bolo de Fubá", "Bolo de Milho", "Bolo de Coco", "Bolo de Cenoura", "Bolo de Laranja", "Bolo de Limão", "Bolo de Morango", "Bolo de Abacaxi", "Bolo de Banana", "Bolo de Maçã", "Bolo de Pêssego", "Bolo de Uva", "Bolo de Mamão", "Bolo de Manga", "Bolo de Maracujá", "Bolo de Goiaba", "Bolo de Acerola", "Bolo de Cajá", "Bolo de Cupuaçu", "Bolo de Graviola", "Bolo de Jaca", "Bolo de Jabuticaba", "Sopa", "Caldo", "Caldo Verde", "Caldo de Cana", "Caldo de Feijão", "Caldo de Galinha", "Caldo de Legumes", "Caldo de Mandioca", "Caldo de Peixe", "Caldo de Queijo", "Caldo de Carne", "Caldo de Frango", "Caldo de Batata", "Caldo de Cenoura", "Caldo de Couve"
+  ]
+}
