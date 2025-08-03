@@ -54,89 +54,12 @@
       color: #333;
     }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js">
-let rodadaFinalizada = false;
-
-function enviarRespostas() {
-  if (rodadaFinalizada) return;
-  rodadaFinalizada = true;
-
-  const respostas = {};
-  categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
-    respostas[cat] = input ? input.value.trim() : "";
-  });
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
-    }
-  });
-}
-
-// Monitorar rodada e disparar fechamento global
-firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
-  if (snap.val() === "finalizada" && !rodadaFinalizada) {
-    rodadaFinalizada = true;
-    obterRespostasParaRodada();
-  }
-});
-
-
-function iniciarTimerRodada() {
-  let tempoRestante = 60;
-  const timerDiv = document.getElementById("timer");
-  timerDiv.innerText = "Tempo restante: " + tempoRestante + "s";
-  const intervalo = setInterval(() => {
-    if (rodadaFinalizada) {
-      clearInterval(intervalo);
-      return;
-    }
-    tempoRestante--;
-    timerDiv.innerText = "Tempo restante: " + tempoRestante + "s";
-    if (tempoRestante <= 0) {
-      clearInterval(intervalo);
-      enviarRespostas();
-    }
-  }, 1000);
-}
-
-</script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js">
-let rodadaFinalizada = false;
-
-function enviarRespostas() {
-  if (rodadaFinalizada) return;
-  rodadaFinalizada = true;
-
-  const respostas = {};
-  categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
-    respostas[cat] = input ? input.value.trim() : "";
-  });
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
-    }
-  });
-}
-
-// Monitorar rodada e disparar fechamento global
-firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
-  if (snap.val() === "finalizada" && !rodadaFinalizada) {
-    rodadaFinalizada = true;
-    obterRespostasParaRodada();
-  }
-});
-
-</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
 </head>
 <body>
-<div id="categorias"></div>
-<div id="resultadoRodada"></div>
   <h2>Rodada do STOP</h2>
   <div id="timer">60</div>
   <div id="info"></div>
@@ -154,6 +77,7 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
     let tempo = 60;
     let intervalo;
     let userId;
+    let respostasEnviadas = false;
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) return location.href = "index.html";
@@ -164,8 +88,12 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
     function carregarRodada() {
       firebase.database().ref("sessoes/" + salaId).once("value").then(snapshot => {
         const sala = snapshot.val();
+        if (!sala || !sala.categorias || !sala.letras) {
+          alert("Erro ao carregar a sala do jogo");
+          return location.href = "dashboard.html";
+        }
         categorias = sala.categorias;
-        letra = sala.letras[rodada];
+        letra = sala.letras[rodada] || "A";
         document.getElementById("info").innerHTML = `<h3>Rodada ${rodada+1}/10 — Letra: ${letra}</h3>`;
         let html = "<form id='respostas'>";
         categorias.forEach(cat => {
@@ -175,41 +103,73 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
         document.getElementById("formulario").innerHTML = html;
 
         iniciarTimer();
+      }).catch(error => {
+        console.error("Erro ao carregar a rodada:", error);
+        alert("Erro ao carregar a rodada. Por favor, tente novamente.");
       });
     }
 
     function iniciarTimer() {
+      tempo = 60;
+      document.getElementById("timer").innerText = tempo;
+      
       intervalo = setInterval(() => {
         tempo--;
         document.getElementById("timer").innerText = tempo;
         if (tempo <= 0) {
           clearInterval(intervalo);
-          enviarRespostas();
+          if (!respostasEnviadas) {
+            enviarRespostas();
+          }
         }
       }, 1000);
     }
 
     function enviarRespostas() {
+      // Prevenir envio duplicado
+      if (respostasEnviadas) return;
+      respostasEnviadas = true;
+      
       clearInterval(intervalo);
+      
+      // Coletar respostas do formulário
       const respostas = {};
       categorias.forEach(cat => {
-        const val = document.getElementById(cat).value.trim();
-        respostas[cat] = val;
+        const input = document.getElementById(cat);
+        respostas[cat] = input ? input.value.trim() : "";
       });
 
-      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${userId}`).set(respostas).then(() => {
-        exibirPontuacoesRodada();
-      });
+      // Enviar respostas para o Firebase
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${userId}`).set(respostas)
+        .then(() => {
+          console.log("Respostas enviadas com sucesso");
+          exibirPontuacoesRodada();
+        })
+        .catch(error => {
+          console.error("Erro ao enviar respostas:", error);
+          alert("Erro ao enviar respostas. Por favor, tente novamente.");
+          respostasEnviadas = false;
+        });
     }
 
     function exibirPontuacoesRodada() {
       firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}`).once("value").then(snapshot => {
         const respostas = snapshot.val();
+        if (!respostas) {
+          console.log("Nenhuma resposta encontrada");
+          return;
+        }
+        
         const contagem = {};
         const pontos = {};
 
+        // Inicializar pontos para todos os jogadores
         for (const uid in respostas) {
           pontos[uid] = 0;
+        }
+
+        // Contar respostas por categoria
+        for (const uid in respostas) {
           for (const cat of categorias) {
             const r = (respostas[uid][cat] || "").trim().toLowerCase();
             if (!contagem[cat]) contagem[cat] = {};
@@ -218,6 +178,7 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
           }
         }
 
+        // Calcular pontos
         for (const cat in contagem) {
           for (const r in contagem[cat]) {
             const grupo = contagem[cat][r];
@@ -238,10 +199,15 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
           }
         }
 
+        // Ordenar por pontos (decrescente)
         const tabela = Object.entries(pontos).sort((a, b) => b[1] - a[1]);
+        
+        // Construir HTML com os resultados
         let html = `<h3>Resultado da Rodada:</h3>`;
         html += "<ul>";
-        let apelidosPromises = tabela.map(([uid, pt]) =>
+        
+        // Obter apelidos dos jogadores
+        const apelidosPromises = tabela.map(([uid, pt]) =>
           firebase.database().ref("usuarios/" + uid + "/apelido").once("value").then(snap => {
             const nome = snap.val() || uid;
             return `<li><b>${nome}</b>: ${pt} pontos</li>`;
@@ -253,6 +219,15 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
           html += "</ul><h3 style='text-align:center;'>Sorteando nova letra em 15s...</h3>";
           document.getElementById("pontosRodada").innerHTML = html;
 
+          // Atualizar pontuação total dos jogadores
+          tabela.forEach(([uid, pt]) => {
+            firebase.database().ref("usuarios/" + uid + "/pontuacao_total").once("value").then(snap => {
+              const pontuacaoAtual = snap.val() || 0;
+              firebase.database().ref("usuarios/" + uid + "/pontuacao_total").set(pontuacaoAtual + pt);
+            });
+          });
+
+          // Redirecionar para a próxima rodada ou finalizar jogo
           setTimeout(() => {
             if (rodada < 9) {
               location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
@@ -261,121 +236,23 @@ firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
             }
           }, 15000);
         });
+      }).catch(error => {
+        console.error("Erro ao carregar respostas:", error);
+        alert("Erro ao carregar resultados. Por favor, tente novamente.");
       });
     }
+  </script>
   
-let rodadaFinalizada = false;
+  <div style="margin-top: 30px; text-align: center;">
+    <button onclick="voltarMenu()">Voltar ao Menu</button>
+  </div>
 
-function enviarRespostas() {
-  if (rodadaFinalizada) return;
-  rodadaFinalizada = true;
-
-  const respostas = {};
-  categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
-    respostas[cat] = input ? input.value.trim() : "";
-  });
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
+  <script>
+  function voltarMenu() {
+    if (confirm("Tem certeza que deseja sair do jogo?")) {
+      window.location.href = "dashboard.html";
     }
-  });
-}
-
-// Monitorar rodada e disparar fechamento global
-firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
-  if (snap.val() === "finalizada" && !rodadaFinalizada) {
-    rodadaFinalizada = true;
-    obterRespostasParaRodada();
   }
-});
-
-</script>
-<script>
-
-
-let resultadoExibido = false;
-
-function mostrarResultadoRodada(respostas, categorias) {
-  if (resultadoExibido) return;
-  resultadoExibido = true;
-
-  const container = document.getElementById("resultadoRodada");
-  container.innerHTML = "<h3>Resultado da Rodada</h3>";
-
-  let html = "<table border='1' style='margin: 0 auto; background:#fff; border-collapse: collapse;'>";
-  html += "<tr><th>Jogador</th>";
-  categorias.forEach(c => html += "<th>" + c + "</th>");
-  html += "<th>Total</th></tr>";
-
-  for (const jogador in respostas) {
-    html += "<tr><td>" + jogador + "</td>";
-    let total = 0;
-    categorias.forEach(cat => {
-      const r = respostas[jogador][cat] || "";
-      const p = respostas[jogador].pontuacoes?.[cat] || 0;
-      html += "<td>" + r + " (" + p + ")</td>";
-      total += p;
-    });
-    html += "<td><strong>" + total + "</strong></td></tr>";
-  }
-
-  html += "</table><br><div style='font-size:18px;color:#007BFF;'>Sorteando nova letra em <span id='timerRodada'>15</span> segundos...</div>";
-  container.innerHTML += html;
-
-  let t = 15;
-  const intervalo = setInterval(() => {
-    t--;
-    document.getElementById("timerRodada").innerText = t;
-    if (t <= 0) {
-      clearInterval(intervalo);
-      proximaRodada();
-    }
-  }, 1000);
-}
-
-
-let rodadaFinalizada = false;
-
-function enviarRespostas() {
-  if (rodadaFinalizada) return;
-  rodadaFinalizada = true;
-
-  const respostas = {};
-  categorias.forEach(cat => {
-    const input = document.getElementById("cat_" + cat);
-    respostas[cat] = input ? input.value.trim() : "";
-  });
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${user.uid}`).set(respostas);
-      firebase.database().ref(`sessoes/${salaId}/status_rodada`).set("finalizada");
-    }
-  });
-}
-
-// Monitorar rodada e disparar fechamento global
-firebase.database().ref(`sessoes/${salaId}/status_rodada`).on("value", snap => {
-  if (snap.val() === "finalizada" && !rodadaFinalizada) {
-    rodadaFinalizada = true;
-    obterRespostasParaRodada();
-  }
-});
-
-</script>
-
-<div style="margin-top: 30px; text-align: center;">
-  <button onclick="voltarMenu()">Voltar ao Menu</button>
-</div>
-
-<script>
-function voltarMenu() {
-  window.location.href = "index.html";
-}
-</script>
-
+  </script>
 </body>
 </html>

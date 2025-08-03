@@ -48,14 +48,24 @@
   <button onclick="window.location='sala.html?acao=encontrar'">Encontrar Sala</button>
   <button onclick="window.location='ranking.html'">Ranking Global</button>
   <button onclick="window.location='estatisticas.html'">Estatísticas</button>
+  <button onclick="logout()">Sair</button>
 
   <script>
     firebase.auth().onAuthStateChanged(user => {
       if (!user) return location.href = "index.html";
       firebase.database().ref("usuarios/" + user.uid + "/apelido").once("value").then(snap => {
-        document.getElementById("apelido").innerText = "Jogador: " + (snap.val() || user.uid);
+        document.getElementById("apelido").innerText = "Jogador: " + (snap.val() || user.email);
       });
     });
+    
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        location.href = "index.html";
+      }).catch((error) => {
+        console.error("Erro ao sair:", error);
+        alert("Erro ao sair. Por favor, tente novamente.");
+      });
+    }
   </script>
 </body>
 </html>

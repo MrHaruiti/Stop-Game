@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Estatísticas - STOP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h2 {
+      color: #333;
+      text-align: center;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .stat-item:last-child {
+      border-bottom: none;
+    }
+    .stat-value {
+      font-weight: bold;
+      color: #007BFF;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      background-color: #007BFF;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h2>Estatísticas do Jogador</h2>
+  
+  <div class="card">
+    <h3>Resumo Geral</h3>
+    <div class="stat-item">
+      <span>Pontuação Total:</span>
+      <span class="stat-value" id="pontuacaoTotal">0</span>
+    </div>
+    <div class="stat-item">
+      <span>Sessões Jogadas:</span>
+      <span class="stat-value" id="sessoesJogadas">0</span>
+    </div>
+    <div class="stat-item">
+      <span>Melhor Colocação:</span>
+      <span class="stat-value" id="melhorColocacao">-</span>
+    </div>
+    <div class="stat-item">
+      <span>Último Jogo:</span>
+      <span class="stat-value" id="ultimoJogo">-</span>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3>Desempenho por Categoria</h3>
+    <div id="categoriasStats">Carregando...</div>
+  </div>
+  
+  <button onclick="window.location='dashboard.html'">Voltar ao Menu</button>
+
+  <script>
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) return location.href = "index.html";
+      
+      // Carregar estatísticas do usuário
+      carregarEstatisticas(user.uid);
+    });
+
+    function carregarEstatisticas(userId) {
+      firebase.database().ref("usuarios/" + userId).once("value").then(snapshot => {
+        const userData = snapshot.val() || {};
+        
+        // Atualizar estatísticas gerais
+        document.getElementById("pontuacaoTotal").innerText = userData.pontuacao_total || 0;
+        document.getElementById("sessoesJogadas").innerText = userData.sessoes_jogadas || 0;
+        document.getElementById("melhorColocacao").innerText = userData.melhor_colocacao || "-";
+        document.getElementById("ultimoJogo").innerText = formatarData(userData.ultimo_jogo) || "-";
+        
+        // Carregar estatísticas por categoria (se disponíveis)
+        carregarEstatisticasPorCategoria(userId);
+      }).catch(error => {
+        console.error("Erro ao carregar estatísticas:", error);
+        alert("Erro ao carregar estatísticas. Por favor, tente novamente.");
+      });
+    }
+
+    function carregarEstatisticasPorCategoria(userId) {
+      // Esta função pode ser expandida para mostrar estatísticas detalhadas por categoria
+      // Por enquanto, vamos mostrar uma mensagem genérica
+      document.getElementById("categoriasStats").innerHTML = 
+        "<p>Estatísticas detalhadas por categoria em desenvolvimento.</p>";
+    }
+
+    function formatarData(dataStr) {
+      if (!dataStr || typeof dataStr !== "string") return "-";
+      const d = new Date(dataStr);
+      return d.toLocaleString("pt-BR");
+    }
+  </script>
+</body>
+</html>

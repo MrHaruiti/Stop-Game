@@ -5,7 +5,14 @@
   <title>Sala - STOP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      padding: 20px; 
+      background: #f0f0f0; 
+      max-width: 600px;
+      margin: 0 auto;
+    }
     button {
       padding: 15px 30px;
       margin: 10px;
@@ -27,6 +34,22 @@
       font-size: 18px;
       padding: 4px;
     }
+    #encontrarSala {
+      display: none;
+    }
+    #criarSala {
+      display: none;
+    }
+    #salaExistente {
+      display: none;
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -35,51 +58,172 @@
 </head>
 <body>
   <h2>Sala do Jogo</h2>
-  <div id="linkSala"></div>
-  <div id="jogadores"></div>
-  <button onclick="copiarLink()">Copiar Link da Sala</button>
-  <button id="btnIniciar" onclick="iniciarJogo()" style="display:none;">Iniciar Jogo</button>
+  
+  <!-- Interface para encontrar sala -->
+  <div id="encontrarSala">
+    <h3>Encontrar Sala Existente</h3>
+    <input type="text" id="idSala" placeholder="ID da Sala">
+    <br>
+    <button onclick="entrarNaSala()">Entrar na Sala</button>
+    <br>
+    <button onclick="mostrarCriarSala()">Criar Nova Sala</button>
+  </div>
+  
+  <!-- Interface para criar sala -->
+  <div id="criarSala">
+    <h3>Criar Nova Sala</h3>
+    <button onclick="criarNovaSala()">Criar Sala</button>
+    <br>
+    <button onclick="mostrarEncontrarSala()">Encontrar Sala Existente</button>
+  </div>
+  
+  <!-- Interface da sala existente -->
+  <div id="salaExistente">
+    <div id="linkSala"></div>
+    <div id="jogadores"></div>
+    <button onclick="copiarLink()">Copiar Link da Sala</button>
+    <button id="btnIniciar" onclick="iniciarJogo()" style="display:none;">Iniciar Jogo</button>
+    <button onclick="sairDaSala()">Sair da Sala</button>
+  </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     let salaId = urlParams.get("id");
     const acao = urlParams.get("acao");
+    let userId = null;
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) return location.href = "index.html";
-
-      if (acao === "criar" && !salaId) {
-        salaId = firebase.database().ref("sessoes").push().key;
-
-        const todasCategorias = ['Mamiferos', 'Insetos', 'Aves', 'Repteis', 'Anfibios', 'Paises', 'Frutas', 'Ossos do Corpo Humano', 'Flores e Plantas', 'Utensilios Domesticos', 'Elementos quimicos', 'Cores', 'Idiomas', 'Moedas', 'Profissões', 'Esportes', 'Comidas e Bebidas', 'Marcas e Empresas', 'Instrumentos musicais'];
-const categoriasSorteadas = todasCategorias.sort(() => 0.5 - Math.random()).slice(0, 10);
-
-
-        firebase.database().ref("sessoes/" + salaId).set({
-          categorias: categoriasSorteadas,
-          letras: "ABCDEFGHIJKLMNOPQRSTUVXZ".split('').sort(() => 0.5 - Math.random()).slice(0,10)
-        }).then(() => {
-          location.href = "sala.html?id=" + salaId + "&acao=criar";
-        });
+      userId = user.uid;
+      
+      // Mostrar a interface apropriada
+      if (acao === "criar") {
+        document.getElementById("criarSala").style.display = "block";
+      } else if (acao === "encontrar") {
+        document.getElementById("encontrarSala").style.display = "block";
       } else if (salaId) {
+        // Já estamos em uma sala existente
+        document.getElementById("salaExistente").style.display = "block";
         joinSala(user);
       }
     });
 
+    function mostrarCriarSala() {
+      document.getElementById("encontrarSala").style.display = "none";
+      document.getElementById("criarSala").style.display = "block";
+    }
+
+    function mostrarEncontrarSala() {
+      document.getElementById("criarSala").style.display = "none";
+      document.getElementById("encontrarSala").style.display = "block";
+    }
+
+    function criarNovaSala() {
+      const user = firebase.auth().currentUser;
+      if (!user) return alert("Usuário não autenticado.");
+      
+      // Gerar ID único para a sala
+      salaId = "sala_" + Date.now();
+      
+      // Selecionar categorias aleatórias
+      const todasCategorias = ['Mamiferos', 'Insetos', 'Aves', 'Repteis', 'Anfibios', 'Paises', 'Frutas', 'Ossos do Corpo Humano', 'Flores e Plantas', 'Utensilios Domesticos', 'Elementos quimicos', 'Cores', 'Idiomas', 'Moedas', 'Profissões', 'Esportes', 'Comidas e Bebidas', 'Marcas e Empresas', 'Instrumentos musicais'];
+      const categoriasSorteadas = todasCategorias.sort(() => 0.5 - Math.random()).slice(0, 10);
+      
+      // Selecionar letras aleatórias
+      const todasLetras = "ABCDEFGHIJKLMNOPQRSTUVXZ".split('').sort(() => 0.5 - Math.random()).slice(0,10);
+
+      // Criar a sala no Firebase
+      firebase.database().ref("sessoes/" + salaId).set({
+        categorias: categoriasSorteadas,
+        letras: todasLetras,
+        host: user.uid,
+        status: "aguardando"
+      }).then(() => {
+        // Adicionar o criador como jogador
+        return firebase.database().ref("usuarios/" + user.uid + "/apelido").once("value");
+      }).then(apelidoSnap => {
+        const apelido = apelidoSnap.val() || user.email.split("@")[0];
+        return firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).set({
+          nome: apelido,
+          pontuacao: 0
+        });
+      }).then(() => {
+        // Mostrar a interface da sala
+        document.getElementById("criarSala").style.display = "none";
+        document.getElementById("salaExistente").style.display = "block";
+        document.getElementById("linkSala").innerText = "Link da sala: " + window.location.href.split("?")[0] + "?id=" + salaId;
+        monitorarSala();
+      }).catch(error => {
+        console.error("Erro ao criar sala:", error);
+        alert("Erro ao criar sala. Por favor, tente novamente.");
+      });
+    }
+
+    function entrarNaSala() {
+      const id = document.getElementById("idSala").value.trim();
+      if (!id) {
+        alert("Por favor, informe o ID da sala.");
+        return;
+      }
+      
+      salaId = id;
+      
+      // Verificar se a sala existe
+      firebase.database().ref("sessoes/" + salaId).once("value").then(snapshot => {
+        if (!snapshot.exists()) {
+          alert("Sala não encontrada.");
+          return;
+        }
+        
+        const sala = snapshot.val();
+        if (sala.status === "iniciado") {
+          alert("Esta sala já está em jogo.");
+          return;
+        }
+        
+        // Entrar na sala
+        const user = firebase.auth().currentUser;
+        return firebase.database().ref("usuarios/" + user.uid + "/apelido").once("value");
+      }).then(apelidoSnap => {
+        const user = firebase.auth().currentUser;
+        const apelido = apelidoSnap.val() || user.email.split("@")[0];
+        
+        // Adicionar jogador à sala
+        return firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).set({
+          nome: apelido,
+          pontuacao: 0
+        });
+      }).then(() => {
+        // Mostrar a interface da sala
+        document.getElementById("encontrarSala").style.display = "none";
+        document.getElementById("salaExistente").style.display = "block";
+        document.getElementById("linkSala").innerText = "Link da sala: " + window.location.href.split("?")[0] + "?id=" + salaId;
+        monitorarSala();
+      }).catch(error => {
+        console.error("Erro ao entrar na sala:", error);
+        alert("Erro ao entrar na sala. Por favor, tente novamente.");
+      });
+    }
+
     function joinSala(user) {
       firebase.database().ref("usuarios/" + user.uid + "/apelido").once("value").then(apelidoSnap => {
-        const jogador = {
-          nome: apelidoSnap.val() || user.email.split("@")[0],
-          pontuacao: 0
-        };
-        firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).set(jogador);
-        firebase.database().ref("sessoes/" + salaId + "/host").once("value").then(snap => {
-          if (!snap.exists()) {
-            firebase.database().ref("sessoes/" + salaId + "/host").set(user.uid);
+        const apelido = apelidoSnap.val() || user.email.split("@")[0];
+        
+        // Adicionar jogador à sala se ainda não estiver
+        return firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).once("value").then(snapshot => {
+          if (!snapshot.exists()) {
+            return firebase.database().ref("sessoes/" + salaId + "/jogadores/" + user.uid).set({
+              nome: apelido,
+              pontuacao: 0
+            });
           }
         });
+      }).then(() => {
         monitorarSala();
-        document.getElementById("linkSala").innerText = "Link da sala: " + window.location.href;
+        document.getElementById("linkSala").innerText = "Link da sala: " + window.location.href.split("?")[0] + "?id=" + salaId;
+      }).catch(error => {
+        console.error("Erro ao entrar na sala:", error);
+        alert("Erro ao entrar na sala. Por favor, tente novamente.");
       });
     }
 
@@ -91,27 +235,43 @@ const categoriasSorteadas = todasCategorias.sort(() => 0.5 - Math.random()).slic
         html += "</ul>";
         document.getElementById("jogadores").innerHTML = html;
 
-        firebase.auth().onAuthStateChanged(user => {
-          firebase.database().ref("sessoes/" + salaId + "/host").once("value").then(snap => {
-            if (snap.val() === user.uid) {
-              document.getElementById("btnIniciar").style.display = "inline";
-            }
-          });
+        // Verificar se o usuário é o host
+        firebase.database().ref("sessoes/" + salaId + "/host").once("value").then(snap => {
+          if (snap.exists() && snap.val() === userId) {
+            document.getElementById("btnIniciar").style.display = "inline";
+          }
         });
       });
     }
 
     function copiarLink() {
-      const link = window.location.href;
+      const link = window.location.href.split("?")[0] + "?id=" + salaId;
       navigator.clipboard.writeText(link).then(() => {
         alert("Link copiado!");
+      }).catch(error => {
+        console.error("Erro ao copiar link:", error);
+        alert("Erro ao copiar link. Por favor, tente novamente.");
       });
     }
 
     function iniciarJogo() {
       firebase.database().ref("sessoes/" + salaId + "/status").set("iniciado").then(() => {
         location.href = "jogo.html?id=" + salaId + "&rodada=0";
+      }).catch(error => {
+        console.error("Erro ao iniciar jogo:", error);
+        alert("Erro ao iniciar jogo. Por favor, tente novamente.");
       });
+    }
+    
+    function sairDaSala() {
+      if (confirm("Tem certeza que deseja sair da sala?")) {
+        firebase.database().ref("sessoes/" + salaId + "/jogadores/" + userId).remove().then(() => {
+          location.href = "dashboard.html";
+        }).catch(error => {
+          console.error("Erro ao sair da sala:", error);
+          alert("Erro ao sair da sala. Por favor, tente novamente.");
+        });
+      }
     }
   </script>
 </body>
