@@ -78,6 +78,8 @@
     let intervalo;
     let userId;
     let respostasEnviadas = false;
+    let estadoRodadaRef;
+    let sincronizandoEstado = false;
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) return location.href = "index.html";
@@ -102,27 +104,140 @@
         html += "</form>";
         document.getElementById("formulario").innerHTML = html;
 
-        iniciarTimer();
+        // Verificar estado atual da rodada
+        verificarEstadoRodada();
       }).catch(error => {
         console.error("Erro ao carregar a rodada:", error);
         alert("Erro ao carregar a rodada. Por favor, tente novamente.");
       });
     }
 
+    function verificarEstadoRodada() {
+      estadoRodadaRef = firebase.database().ref(`sessoes/${salaId}/estado_rodada/${rodada}`);
+      
+      estadoRodadaRef.once("value").then(snapshot => {
+        const estado = snapshot.val();
+        
+        if (!estado) {
+          // Primeira vez que alguém acessa esta rodada - inicializar
+          inicializarRodada();
+        } else {
+          // Rodada já existe - sincronizar com o estado atual
+          sincronizarComEstado(estado);
+        }
+
+        // Escutar mudanças no estado da rodada
+        estadoRodadaRef.on("value", snapshot => {
+          if (!sincronizandoEstado) {
+            const novoEstado = snapshot.val();
+            if (novoEstado) {
+              sincronizarComEstado(novoEstado);
+            }
+          }
+        });
+      });
+    }
+
+    function inicializarRodada() {
+      const agora = Date.now();
+      const estadoInicial = {
+        status: "jogando", // "jogando", "calculando", "aguardando"
+        inicio: agora,
+        fim_previsto: agora + 60000, // 60 segundos
+        fim_resultados: null
+      };
+
+      sincronizandoEstado = true;
+      estadoRodadaRef.set(estadoInicial).then(() => {
+        sincronizandoEstado = false;
+        iniciarTimer();
+      });
+    }
+
+    function sincronizarComEstado(estado) {
+      const agora = Date.now();
+      
+      switch (estado.status) {
+        case "jogando":
+          const tempoRestante = Math.max(0, Math.floor((estado.fim_previsto - agora) / 1000));
+          if (tempoRestante > 0) {
+            iniciarTimerSincronizado(tempoRestante);
+          } else {
+            // Tempo já acabou, mas ainda não foi processado
+            finalizarRodada();
+          }
+          break;
+          
+        case "calculando":
+          mostrarCalculando();
+          break;
+          
+        case "aguardando":
+          const tempoAguardo = Math.max(0, Math.floor((estado.fim_resultados - agora) / 1000));
+          if (tempoAguardo > 0) {
+            exibirResultadosComTimer(tempoAguardo);
+          } else {
+            // Tempo de aguardo acabou, ir para próxima rodada
+            proximaRodada();
+          }
+          break;
+      }
+    }
+
     function iniciarTimer() {
-      tempo = 60;
+      iniciarTimerSincronizado(60);
+    }
+
+    function iniciarTimerSincronizado(tempoInicial) {
+      clearInterval(intervalo);
+      tempo = tempoInicial;
       document.getElementById("timer").innerText = tempo;
+      
+      // Mostrar formulário se ainda estiver jogando
+      document.getElementById("formulario").style.display = "block";
+      document.querySelector("button[onclick='enviarRespostas()']").style.display = "block";
       
       intervalo = setInterval(() => {
         tempo--;
         document.getElementById("timer").innerText = tempo;
         if (tempo <= 0) {
           clearInterval(intervalo);
-          if (!respostasEnviadas) {
-            enviarRespostas();
-          }
+          finalizarRodada();
         }
       }, 1000);
+    }
+
+    function finalizarRodada() {
+      if (!respostasEnviadas) {
+        enviarRespostas();
+      } else {
+        // Se já enviou respostas, apenas atualizar estado para calculando
+        atualizarEstadoRodada("calculando");
+      }
+    }
+
+    function mostrarCalculando() {
+      clearInterval(intervalo);
+      document.getElementById("timer").innerText = "Calculando...";
+      document.getElementById("formulario").style.display = "none";
+      document.querySelector("button[onclick='enviarRespostas()']").style.display = "none";
+      
+      // Verificar se já existem resultados calculados
+      firebase.database().ref(`sessoes/${salaId}/resultados_rodada/${rodada}`).once("value").then(snapshot => {
+        if (snapshot.exists()) {
+          const resultados = snapshot.val();
+          exibirResultados(resultados);
+        }
+      });
+    }
+
+    function atualizarEstadoRodada(novoStatus, dadosExtras = {}) {
+      sincronizandoEstado = true;
+      const atualizacao = { status: novoStatus, ...dadosExtras };
+      
+      estadoRodadaRef.update(atualizacao).then(() => {
+        sincronizandoEstado = false;
+      });
     }
 
     function enviarRespostas() {
@@ -143,7 +258,10 @@
       firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}/${userId}`).set(respostas)
         .then(() => {
           console.log("Respostas enviadas com sucesso");
-          exibirPontuacoesRodada();
+          // Atualizar estado para calculando
+          atualizarEstadoRodada("calculando");
+          // Processar resultados se for o primeiro a terminar
+          processarResultadosRodada();
         })
         .catch(error => {
           console.error("Erro ao enviar respostas:", error);
@@ -152,94 +270,145 @@
         });
     }
 
-    function exibirPontuacoesRodada() {
-      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}`).once("value").then(snapshot => {
-        const respostas = snapshot.val();
-        if (!respostas) {
-          console.log("Nenhuma resposta encontrada");
+    function processarResultadosRodada() {
+      // Verificar se os resultados já foram processados
+      firebase.database().ref(`sessoes/${salaId}/resultados_rodada/${rodada}`).once("value").then(snapshot => {
+        if (snapshot.exists()) {
+          // Resultados já processados, apenas exibir
+          exibirResultados(snapshot.val());
           return;
         }
-        
-        const contagem = {};
-        const pontos = {};
 
-        // Inicializar pontos para todos os jogadores
-        for (const uid in respostas) {
-          pontos[uid] = 0;
-        }
-
-        // Contar respostas por categoria
-        for (const uid in respostas) {
-          for (const cat of categorias) {
-            const r = (respostas[uid][cat] || "").trim().toLowerCase();
-            if (!contagem[cat]) contagem[cat] = {};
-            if (!contagem[cat][r]) contagem[cat][r] = [];
-            contagem[cat][r].push(uid);
+        // Processar resultados pela primeira vez
+        firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}`).once("value").then(snapshot => {
+          const respostas = snapshot.val();
+          if (!respostas) {
+            console.log("Nenhuma resposta encontrada");
+            return;
           }
-        }
+          
+          const contagem = {};
+          const pontos = {};
 
-        // Calcular pontos
-        for (const cat in contagem) {
-          for (const r in contagem[cat]) {
-            const grupo = contagem[cat][r];
-            let p = 0;
-            if (r === "") p = 0;
-            else if (grupo.length === 1) p = 100;
-            else if (grupo.length === 2) p = 50;
-            else if (grupo.length === 3) p = 33;
-            else if (grupo.length === 4) p = 25;
-            else if (grupo.length === 5) p = 20;
-            else if (grupo.length === 6) p = 18;
-            else if (grupo.length === 7) p = 14;
-            else if (grupo.length === 8) p = 13;
-            else if (grupo.length === 9) p = 11;
-            else p = 10;
-
-            grupo.forEach(uid => pontos[uid] += p);
+          // Inicializar pontos para todos os jogadores
+          for (const uid in respostas) {
+            pontos[uid] = 0;
           }
-        }
 
-        // Ordenar por pontos (decrescente)
-        const tabela = Object.entries(pontos).sort((a, b) => b[1] - a[1]);
-        
-        // Construir HTML com os resultados
-        let html = `<h3>Resultado da Rodada:</h3>`;
-        html += "<ul>";
-        
-        // Obter apelidos dos jogadores
-        const apelidosPromises = tabela.map(([uid, pt]) =>
-          firebase.database().ref("usuarios/" + uid + "/apelido").once("value").then(snap => {
-            const nome = snap.val() || uid;
-            return `<li><b>${nome}</b>: ${pt} pontos</li>`;
-          })
-        );
-
-        Promise.all(apelidosPromises).then(linhas => {
-          html += linhas.join("");
-          html += "</ul><h3 style='text-align:center;'>Sorteando nova letra em 15s...</h3>";
-          document.getElementById("pontosRodada").innerHTML = html;
-
-          // Atualizar pontuação total dos jogadores
-          tabela.forEach(([uid, pt]) => {
-            firebase.database().ref("usuarios/" + uid + "/pontuacao_total").once("value").then(snap => {
-              const pontuacaoAtual = snap.val() || 0;
-              firebase.database().ref("usuarios/" + uid + "/pontuacao_total").set(pontuacaoAtual + pt);
-            });
-          });
-
-          // Redirecionar para a próxima rodada ou finalizar jogo
-          setTimeout(() => {
-            if (rodada < 9) {
-              location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
-            } else {
-              location.href = `fim.html?id=${salaId}`;
+          // Contar respostas por categoria
+          for (const uid in respostas) {
+            for (const cat of categorias) {
+              const r = (respostas[uid][cat] || "").trim().toLowerCase();
+              if (!contagem[cat]) contagem[cat] = {};
+              if (!contagem[cat][r]) contagem[cat][r] = [];
+              contagem[cat][r].push(uid);
             }
-          }, 15000);
+          }
+
+          // Calcular pontos
+          for (const cat in contagem) {
+            for (const r in contagem[cat]) {
+              const grupo = contagem[cat][r];
+              let p = 0;
+              if (r === "") p = 0;
+              else if (grupo.length === 1) p = 100;
+              else if (grupo.length === 2) p = 50;
+              else if (grupo.length === 3) p = 33;
+              else if (grupo.length === 4) p = 25;
+              else if (grupo.length === 5) p = 20;
+              else if (grupo.length === 6) p = 18;
+              else if (grupo.length === 7) p = 14;
+              else if (grupo.length === 8) p = 13;
+              else if (grupo.length === 9) p = 11;
+              else p = 10;
+
+              grupo.forEach(uid => pontos[uid] += p);
+            }
+          }
+
+          // Ordenar por pontos (decrescente)
+          const tabela = Object.entries(pontos).sort((a, b) => b[1] - a[1]);
+          
+          // Salvar resultados no Firebase
+          const resultados = { pontos, tabela };
+          firebase.database().ref(`sessoes/${salaId}/resultados_rodada/${rodada}`).set(resultados).then(() => {
+            // Atualizar pontuação total dos jogadores
+            tabela.forEach(([uid, pt]) => {
+              firebase.database().ref("usuarios/" + uid + "/pontuacao_total").once("value").then(snap => {
+                const pontuacaoAtual = snap.val() || 0;
+                firebase.database().ref("usuarios/" + uid + "/pontuacao_total").set(pontuacaoAtual + pt);
+              });
+            });
+
+            // Definir estado para aguardando e exibir resultados
+            const agora = Date.now();
+            atualizarEstadoRodada("aguardando", { fim_resultados: agora + 15000 });
+            exibirResultados(resultados);
+          });
         });
       }).catch(error => {
-        console.error("Erro ao carregar respostas:", error);
-        alert("Erro ao carregar resultados. Por favor, tente novamente.");
+        console.error("Erro ao processar resultados:", error);
       });
+    }
+
+    function exibirResultados(resultados) {
+      const { tabela } = resultados;
+      
+      // Construir HTML com os resultados
+      let html = `<h3>Resultado da Rodada:</h3>`;
+      html += "<ul>";
+      
+      // Obter apelidos dos jogadores
+      const apelidosPromises = tabela.map(([uid, pt]) =>
+        firebase.database().ref("usuarios/" + uid + "/apelido").once("value").then(snap => {
+          const nome = snap.val() || uid;
+          return `<li><b>${nome}</b>: ${pt} pontos</li>`;
+        })
+      );
+
+      Promise.all(apelidosPromises).then(linhas => {
+        html += linhas.join("");
+        html += "</ul><div id='timer-aguardo' style='text-align:center; font-size:18px; margin-top:15px;'></div>";
+        document.getElementById("pontosRodada").innerHTML = html;
+      });
+    }
+
+    function exibirResultadosComTimer(tempoRestante) {
+      // Verificar se os resultados já estão sendo exibidos
+      firebase.database().ref(`sessoes/${salaId}/resultados_rodada/${rodada}`).once("value").then(snapshot => {
+        if (snapshot.exists()) {
+          exibirResultados(snapshot.val());
+          iniciarTimerAguardo(tempoRestante);
+        }
+      });
+    }
+
+    function iniciarTimerAguardo(tempoInicial) {
+      clearInterval(intervalo);
+      let tempoAguardo = tempoInicial;
+      
+      const timerElement = document.getElementById("timer-aguardo") || document.getElementById("timer");
+      
+      const atualizarTimer = () => {
+        if (tempoAguardo > 0) {
+          timerElement.innerHTML = `<h3>Próxima rodada em ${tempoAguardo}s...</h3>`;
+          tempoAguardo--;
+        } else {
+          clearInterval(intervalo);
+          proximaRodada();
+        }
+      };
+
+      atualizarTimer();
+      intervalo = setInterval(atualizarTimer, 1000);
+    }
+
+    function proximaRodada() {
+      if (rodada < 9) {
+        location.href = `jogo.html?id=${salaId}&rodada=${rodada + 1}`;
+      } else {
+        location.href = `fim.html?id=${salaId}`;
+      }
     }
   </script>
   
