@@ -352,25 +352,93 @@
     }
 
     function exibirResultados(resultados) {
-      const { tabela } = resultados;
+      const { tabela, pontos } = resultados;
       
-      // Construir HTML com os resultados
-      let html = `<h3>Resultado da Rodada:</h3>`;
-      html += "<ul>";
-      
-      // Obter apelidos dos jogadores
-      const apelidosPromises = tabela.map(([uid, pt]) =>
-        firebase.database().ref("usuarios/" + uid + "/apelido").once("value").then(snap => {
-          const nome = snap.val() || uid;
-          return `<li><b>${nome}</b>: ${pt} pontos</li>`;
-        })
-      );
+      // Buscar respostas da rodada atual
+      firebase.database().ref(`sessoes/${salaId}/respostas/${rodada}`).once("value").then(respostasSnapshot => {
+        const respostasRodada = respostasSnapshot.val() || {};
+        
+        // Buscar pontuações totais acumuladas
+        const promisesJogadores = tabela.map(([uid, pontosRodada]) => {
+          return Promise.all([
+            firebase.database().ref("usuarios/" + uid + "/apelido").once("value"),
+            firebase.database().ref("usuarios/" + uid + "/pontuacao_total").once("value")
+          ]).then(([apelidoSnap, pontuacaoSnap]) => {
+            const nome = apelidoSnap.val() || uid;
+            const pontuacaoTotal = pontuacaoSnap.val() || 0;
+            const respostasJogador = respostasRodada[uid] || {};
+            
+            return {
+              uid,
+              nome,
+              respostas: respostasJogador,
+              pontosRodada,
+              pontuacaoTotal
+            };
+          });
+        });
 
-      Promise.all(apelidosPromises).then(linhas => {
-        html += linhas.join("");
-        html += "</ul><div id='timer-aguardo' style='text-align:center; font-size:18px; margin-top:15px;'></div>";
-        document.getElementById("pontosRodada").innerHTML = html;
+        Promise.all(promisesJogadores).then(dadosJogadores => {
+          construirTabelaDetalhada(dadosJogadores);
+        });
       });
+    }
+
+    function construirTabelaDetalhada(dadosJogadores) {
+      let html = `
+        <div style="margin-top: 20px;">
+          <h3 style="text-align: center; color: #333;">Resultado da Rodada ${rodada + 1}</h3>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <thead>
+                <tr style="background-color: #007BFF; color: white;">
+                  <th style="padding: 12px 8px; text-align: left; border: 1px solid #ddd; min-width: 100px;">Jogador</th>`;
+      
+      // Adicionar colunas para cada categoria
+      categorias.forEach(categoria => {
+        html += `<th style="padding: 12px 8px; text-align: center; border: 1px solid #ddd; min-width: 120px;">${categoria}</th>`;
+      });
+      
+      html += `
+                  <th style="padding: 12px 8px; text-align: center; border: 1px solid #ddd; min-width: 80px;">Pontos<br>Rodada</th>
+                  <th style="padding: 12px 8px; text-align: center; border: 1px solid #ddd; min-width: 80px;">Total<br>Acumulado</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+      // Adicionar linha para cada jogador
+      dadosJogadores.forEach((jogador, index) => {
+        const corLinha = index % 2 === 0 ? '#f8f9fa' : '#ffffff';
+        html += `<tr style="background-color: ${corLinha};">`;
+        html += `<td style="padding: 10px 8px; border: 1px solid #ddd; font-weight: bold; color: #333;">${jogador.nome}</td>`;
+        
+        // Adicionar respostas para cada categoria
+        categorias.forEach(categoria => {
+          const resposta = jogador.respostas[categoria] || '';
+          const corResposta = resposta ? '#28a745' : '#dc3545';
+          html += `<td style="padding: 10px 8px; border: 1px solid #ddd; text-align: center; color: ${corResposta}; font-weight: ${resposta ? 'normal' : 'bold'};">
+                     ${resposta || '(vazio)'}
+                   </td>`;
+        });
+        
+        html += `<td style="padding: 10px 8px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: #007BFF;">${jogador.pontosRodada}</td>`;
+        html += `<td style="padding: 10px 8px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: #28a745;">${jogador.pontuacaoTotal}</td>`;
+        html += `</tr>`;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top: 15px; padding: 10px; background-color: #e9ecef; border-radius: 5px; text-align: center;">
+            <small style="color: #6c757d;">
+              <strong>Pontuação:</strong> Resposta única = 100pts | 2 iguais = 50pts | 3 iguais = 33pts | 4+ iguais = 25pts ou menos
+            </small>
+          </div>
+          <div id='timer-aguardo' style='text-align:center; font-size:18px; margin-top:15px; color: #c0392b; font-weight: bold;'></div>
+        </div>`;
+
+      document.getElementById("pontosRodada").innerHTML = html;
     }
 
     function exibirResultadosComTimer(tempoRestante) {
